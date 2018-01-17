@@ -1,10 +1,19 @@
-#include "stdafx.h"
-#include <iostream>
+#include "Neat.h"
 using namespace std;
 
-int main()
+Network Neat::start(double * input, int cutoff, double target)
 {
-	cout << "works?";
-    return 0;
+	return Network();
 }
 
+void Neat::printNeat()
+{
+}
+
+void Neat::mutatePopulation()
+{
+}
+
+void Neat::speciateAll()
+{
+}
