@@ -1,5 +1,6 @@
 #pragma once
-#include "Node.h"
+
+class Node;
 
 class Connection {
 public:

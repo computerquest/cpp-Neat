@@ -21,7 +21,7 @@ public:
 	void speciateAll();
 	void checkSpecies();
 	void speciate();
-	double compareGenome(int node, vector<int> innovation, int nodeA, vecotr<int> innovationA);
+	double compareGenome(int node, vector<int> innovation, int nodeA, vector<int> innovationA);
 
 	int* getInnovation(int num);
 	int findInnovation(int search[2]);
