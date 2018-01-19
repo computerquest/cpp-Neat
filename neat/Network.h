@@ -18,7 +18,7 @@ public:
 	void printNetwork();
 	vector<double> process(double input[]);
 	double backProp(double input[], double desired[]);
-	double trainset(double* input, int lim);
+	double trainset(vector<vector<vector<double>>> input, int lim);
 	int getInnovation(int pos);
 	void addInnovation(int num);
 	bool containsInnovation(int num);
@@ -34,9 +34,6 @@ public:
 	int mutateNode(int from, int to, int innovationA, int innovationB);
 	bool checkCircleMaster(Node* n, int goal);
 	bool checkCircle(Node* n, int goal, int preCheck[]);
-
-private:
-	~Network();
 };
 
 Network clone(Network* n);

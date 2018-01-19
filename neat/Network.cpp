@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "Network.h"
+#include "Connection.h"
+using namespace std;
+
 Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon)
 {
 	networkId = id;
@@ -51,82 +54,260 @@ vector<double> Network::process(double input[]) {
 
 double Network::backProp(double input[], double desired[])
 {
-	return 0.0;
+	process(input); //set the values for the input
+
+	double error = 0.0; //return value
+
+					  //this will calc all the influence
+	for (int i = 0; i < output.size(); i++) {
+		output[i].setInfluence(output[i]->value - desired[i]);
+		error += abs(output[i]->value - desired[i]);
+	}
+
+	//all the influence is set the same way as values so it is set via connections and signalling
+
+	//actually adjusts the weights
+	for (int i = 0; i < nodeList.size(); i++) {
+		for (int a = 0; a < nodeList[i].receive.size(); a++) {
+			nodeList[i].receive[a]->nextWeight -= (nodeList[i].receive[a]->nodeFrom->value) * nodeList[i].influence * learningRate;
+		}
+	}
+
+	return error;
 }
 
-double Network::trainset(double * input, int lim)
+double Network::trainset(vector<vector<vector<double>>> input, int lim)
 {
-	return 0.0;
+	double errorChange = -1000.0; //percent of error change
+	double lastError = 1000.0;
+
+	//initializes best weights
+	vector<vector<double>> bestWeight;
+
+	resetWeight(); //clears the current weight values
+
+	int strikes = 10; //number of times in a row that error can increase
+	for (int z = 1; strikes > 0 && z < lim && lastError > .000001; z++) {
+		double currentError = 0.0;
+
+		//resets all the nextWeights
+		for (int i = 0; i < nodeList.size(); i++) {
+			for (int a = 0; a < nodeList[i].send.size(); a++) {
+				nodeList[i].send[a].nextWeight = 0;
+			}
+		}
+
+		//trains each input
+		for (int i = 0; i < sizeof(input) / sizeof(input[0]); i++) { //TODO: might not work
+			currentError += backProp(input[i][0], input[i][1]);
+		}
+
+		//updates all the weight
+		for (int i = 0; i < nodeList.size(); i++) {
+			for (int a = 0; a < nodeList[i].send.size(); a++) {
+				nodeList[i].send[a].weight += nodeList[i].send[a].nextWeight / input.size();
+			}
+		}
+
+		errorChange = (currentError - lastError) / lastError;
+		lastError = currentError;
+
+		//decreases the number of strikes or resets them and changes best weight
+		if (errorChange >= 0) {
+			strikes--;
+		}
+		else {
+			for (int i = 0; i < nodeList.size(); i++) {
+				for (int a = 0; a < nodeList[i].send.size(); a++) {
+					bestWeight[i][a] = nodeList[i].send[a].weight;
+				}
+			}
+			strikes = 10;
+		}
+	}
+
+	//sets the weights back to the best
+	for (int i = 0; i < bestWeight.size(); i++) {
+		for (int a = 0; a < bestWeight[i].size(); a++) {
+			nodeList[i].send[a].weight = bestWeight[i][a];
+		}
+	}
+
+	//calculate the final error
+	double final = 0.0;
+	for (int i = 0; i < input.size(); i++) {
+		vector<double> stuff = process(input[i][0]);
+		for (int a = 0; a < stuff.size(); a++) {
+			final += abs(stuff[a] - input[i][1][a]);
+		}
+	}
+
+	fitness = 1 / final;
+	return final;
 }
 
 int Network::getInnovation(int pos)
 {
-	return 0;
+	return innovation[pos];
 }
 
 void Network::addInnovation(int num)
 {
-}
-
-Network clone(Network * n)
-{
-	return Network();
+	innovation.push_back(num);
 }
 
 bool Network::containsInnovation(int num)
 {
+	for (int i = 0; i < innovation.size(); i++) {
+		if (innovation[i] == num) {
+			return true;
+		}
+	}
+
 	return false;
 }
 
 void Network::removeInnovation(int num)
 {
+	for (int i = 0; i < innovation.size(); i++) {
+		if (innovation[i] == num) {
+			innovation.erase(innovation.begin() + i);
+		}
+	}
 }
 
 void Network::mutateConnection(int from, int to, int innovation)
 {
+	getNode(to)->addRecCon(getNode(from)->addSendCon(Connection(getNode(from), getNode(to), innovation)));
+	addInnovation(innovation);
 }
 
 int Network::numConnection()
 {
-	return 0;
+	double ans = 0;
+	for (int i = 0; i < nodeList.size(); i++) {
+		ans += nodeList[i].send.size();
+	}
+
+	return ans;
 }
 
 void Network::resetWeight()
 {
+	for (int i = 0; i < nodeList.size(); i++) {
+		for (int a = 0; a < nodeList[i].send.size(); a++) {
+			nodeList[i].send[a].randWeight();
+			nodeList[i].send[a].nextWeight = 0;
+		}
+	}
 }
 
 Node * Network::getNode(int i)
 {
-	return nullptr;
+	return &nodeList[i];
 }
 
 Node * Network::createNode(int send)
 {
-	return nullptr;
+	nodeList.push_back(Node(nodeList.size(), send));
+	return nodeList.back();
 }
 
 int Network::getNextNodeId()
 {
-	return 0;
+	return nodeList.size();
 }
 
 int Network::mutateNode(int from, int to, int innovationA, int innovationB)
 {
-	return 0;
+	Node* fromNode = getNode(from);
+	Node* toNode = getNode(to);
+	Node* newNode = createNode(100);
+
+	addInnovation(innovationA);
+	addInnovation(innovationB);
+
+	//changes the connection recieved by toNode to a connection sent by newNode
+	for (int i = 0; i < toNode->recieve.size(); i++) {
+		if (fromNode == toNode->recieve[i]->nodeFrom) {
+			removeInnovation(toNode->recieve[i].innovation);
+			toNode->recieve[i] = newNode->addSendCon(Connection(newNode, toNode, innovationB));
+		}
+	}
+
+	//modifies the connection from fromNode by changing the toNode for the connection to newNode from toNode
+	for (int i = 0; i < fromNode->send.size(); i++) {
+		if (fromNode->send[i].nodeTo->id == toNode->id) {
+			fromNode->send[i].nodeTo = newNode;
+			fromNode->send[i].innovation = innovationA;
+
+			newNode->addRecCon(&(fromNode->send[i]));
+		}
+	}
+
+	return newNode->id;
 }
 
 bool Network::checkCircleMaster(Node * n, int goal)
 {
-	return false;
+	const int s = nodeList.size();
+	int* preCheck = new int[s];
+
+	for (int i = 0; i < sizeof(preCheck) / sizeof(preCheck[0]); i++) {
+		preCheck[i] = i;
+	}
+
+	bool ans = checkCircle(n, goal, preCheck);
+	delete[] preCheck;
+
+	return ans;
 }
 
 bool Network::checkCircle(Node * n, int goal, int preCheck[])
 {
-	return false;
+	bool ans = false;
+	if (n->id == goal) {
+		return true;
+	}
+
+	//checks for the precheck
+	if (preCheck[n->id] == -1) {
+		return false;
+	}
+
+	//checks next stop down
+	for (int i = 0; i < n->recieve.size(); i++) {
+		ans = checkCircle(n->recieve[i].nodeFrom, goal, preCheck);
+		if (ans) {
+			break;
+		}
+	}
+
+	//sets the precheck
+	if (!ans) {
+		preCheck[n->id] = -1;
+	}
+
+	return ans;
 }
 
-Network::~Network()
+Network clone(Network* n)
 {
-	delete[] output;
-	delete[] input;
+	//need to totally reconstruct because otherwise the pointers in connections and such would be screwed up
+	Network ans(n->input.size() - 1, n->output.size(), n->networkId, n->species, n->learningRate, false);
+
+	for (int i = 0; i < n->nodeList.size() - n->input.size() - n->output.size(); i++) {
+		ans.createNode(100);
+	}
+
+	 for (int i = 0; i < n->nodeList.size(); i++) {
+		 for (int a = 0; a < n->nodeList[i].send.size(); a++) {
+			 ans.mutateConnection(n->nodeList[i].send[a].nodeFrom->id, n->nodeList[i].send[a].nodeTo->id, n->nodeList[i].send[a].innovation);
+			 ans.nodeList[i].send[a].weight = n->nodeList[i].send[a].weight;
+		 }
+	 }
+
+	 ans.fitness = n->fitness;
+
+	 return ans;
 }

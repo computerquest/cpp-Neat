@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "Connection.h"
 #include "Node.h"
-#include<ctime>
-#include<cstdlib>
+#include <cstdlib>
 using namespace std;
 
 Connection::Connection(Node * fromNode, Node * toNode, int inNumber)

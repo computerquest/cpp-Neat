@@ -7,11 +7,12 @@ class Species {
 public:
 	vector<Network*> network;
 	vector<int> connectionInnovation;
+	vector<int> commonInnovation;
 	vector<int[2]>* innovationDict;
 	int id;
 	double mutate;
 
-	Species();
+	Species(int id, vector<Network*> networks, vector<int[2]> *innovations, double mutate);
 
 	void addCI(int a);
 	void removeCI(int a);
@@ -20,7 +21,7 @@ public:
 	int* reduceInov(int i);
 	void checkCI();
 	int* getInnovationRef(int num);
-	int createNewInnovation(int values[]);
+	int createNewInnovation(int values[2]);
 	void sortInnovation();
 
 	Network* getNetworkAt(int a);

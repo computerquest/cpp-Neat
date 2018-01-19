@@ -2,6 +2,12 @@
 #include "Activation.h"
 using namespace std;
 
+Node::Node(int id, int send)
+{
+	this->id = id; 
+	this->send.reserve(send);
+}
+
 void Node::recieveValue()
 {
 	inputRecieved++;

@@ -13,6 +13,8 @@ public:
 	int inputRecieved;
 	int influenceRecieved;
 
+	Node(int id, int send);
+
 	void recieveValue();
 	void recieveInfluence();
 	Connection* addSendCon(Connection c);
