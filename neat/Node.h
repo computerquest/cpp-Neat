@@ -20,8 +20,8 @@ public:
 	Connection* getRecCon(int i);
 	Connection* getSendCon(int i);
 	bool connectsTo(int id);
-	void setValue();
-	void setInfluence();
+	void setValue(double value);
+	void setInfluence(double value);
 };
 
 bool isInput(Node* n);
