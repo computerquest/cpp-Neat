@@ -11,6 +11,7 @@ public:
 	vector<Node*> input;
 	vector<Node*> output;
 	double fitness;
+	double adjustedFitness;
 	int networkId;
 	int species;
 	
