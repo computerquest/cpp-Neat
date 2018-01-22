@@ -1,15 +1,15 @@
 #include "stdafx.h"
 #include "Species.h"
 #include <algorithm>
-#include <cstdlib>
+#include<ctime> //for time function
+#include<cstdlib>// for srand function.
 using namespace std;
 
-Species::Species(int id, vector<Network*> networks, vector<int[2]>* innovations, double mutate)
+Species::Species(int id, vector<Network*> networks, vector<int[2]>& innovations, double mutate): innovationDict(innovations)
 {
 	this->id = id;
 	this->mutate = mutate;
 	this->network = networks;
-	this->innovationDict = innovations;
 
 	updateStereotype();
 }
@@ -34,29 +34,29 @@ void Species::removeCI(int a)
 	}
 }
 
-int* Species::getInovOcc(int i)
+int& Species::getInovOcc(int i)
 {
 	return &(connectionInnovation[i]);
 }
 
-int * Species::incrementInov(int i)
+int& Species::incrementInov(int i)
 {
-	int* ans = getInovOcc(i);
-	(*ans)++;
+	int& ans = getInovOcc(i);
+	(ans)++;
 
-	if (double((*ans) / network.size()) >= .5) {
+	if (double((ans) / network.size()) >= .5) {
 		addCI(i);
 	}
 
 	return ans;
 }
 
-int * Species::reduceInov(int i)
+int& Species::reduceInov(int i)
 {
-	int* ans = getInovOcc(i);
-	(*ans)--;
+	int& ans = getInovOcc(i);
+	(ans)--;
 
-	if (double((*ans) / network.size()) < .5) {
+	if (double((ans) / network.size()) < .5) {
 		removeCI(i);
 	}
 
@@ -76,18 +76,18 @@ void Species::checkCI()
 	}
 }
 
-int * Species::getInnovationRef(int num)
+int* Species::getInnovationRef(int num)
 {
-	return (*innovationDict)[num];
+	return (innovationDict)[num];
 }
 
 int Species::createNewInnovation(int values[2])
 {
 	//dictControl.Lock() TODO: fix the multithread
-	(*innovationDict).push_back(values);
+	(innovationDict).push_back(values);
 	//defer dictControl.Unlock()
 
-	return innovationDict->size() - 1;
+	return innovationDict.size() - 1;
 }
 
 void Species::sortInnovation()
@@ -97,7 +97,7 @@ void Species::sortInnovation()
 	}
 }
 
-Network * Species::getNetworkAt(int a)
+Network& Species::getNetworkAt(int a)
 {
 	return network[a];
 }
@@ -118,23 +118,22 @@ void Species::removeNetwork(int id)
 	}
 }
 
-Network * Species::getNetwork(int id)
+Network& Species::getNetwork(int id)
 {
 	for (int i = 0; i < network.size(); i++) {
 		if (network[i].networkId == id) {
-			return &network[i];
+			return network[i];
 		}
 	}
-	return nullptr;
 }
 
-void Species::addNetwork(Network * n)
+void Species::addNetwork(Network& n)
 {
-	network.push_back(n);
+	network.push_back(&n);
 	int species = id;
 
-	for (int i = 0; i < n->innovation.size(); i++) {
-		incrementInov(n->innovation[i]);
+	for (int i = 0; i < n.innovation.size(); i++) {
+		incrementInov(n.innovation[i]);
 	}
 
 	checkCI();
@@ -160,15 +159,15 @@ void Species::updateStereotype()
 	}
 }
 
-void Species::mutateNetwork(Network * network)
+void Species::mutateNetwork(Network& network)
 {
-	srand(unsigned(time(NULL)));
-	int nodeRange = network->nodeList.size();
+	srand((unsigned)time(0)); 
+	int nodeRange = network.nodeList.size();
 
 	//finds or adds innovation numbers and returns the innovation
 	auto addConnectionInnovation = [&](int numFrom, int numTo) {
 		//checks to see if preexisting innovation
-		int maxPos = innovationDict->size();
+		int maxPos = innovationDict.size();
 		for (int i = 0; i < maxPos; i++) {
 			int* pos = getInnovationRef(i);
 			if (pos[1] == numTo && pos[0] == numFrom) {
@@ -179,7 +178,8 @@ void Species::mutateNetwork(Network * network)
 		}
 
 		//checks to see if needs to grow
-		int num = createNewInnovation((const int[2]) { numFrom, numTo });
+		int arr[] = { numFrom, numTo };
+		int num = createNewInnovation(arr);
 
 		incrementInov(num);
 
@@ -196,15 +196,15 @@ void Species::mutateNetwork(Network * network)
 		while (!ans) {
 			firstNode = int(rand() *nodeRange);
 
-			if (network->getNode(firstNode)->send.size() > 0) {
+			if (network.getNode(firstNode).send.size() > 0) {
 				ans = true;
 			}
 		}
 
 		//picks a random connection from firstNode and gets the id
-		secondNode = network->getNode(firstNode)->send[int(rand()*network->getNode(firstNode)->send.size())].nodeTo.id; //int(r.Int63n(int64(nodeRange)));
+		secondNode = network.getNode(firstNode).send[int(rand()*network.getNode(firstNode).send.size())].nodeTo.id; //int(r.Int63n(int64(nodeRange)));
 
-		network->mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network->getNextNodeId()), addConnectionInnovation(network->getNextNodeId(), secondNode));
+		network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode));
 	};
 
 	//randomly picks if node or connection mutate
@@ -223,11 +223,11 @@ void Species::mutateNetwork(Network * network)
 			firstNode = rand()*nodeRange;
 			secondNode = rand()*nodeRange;
 
-			if (firstNode == secondNode || isOutput(network->getNode(firstNode)) || isInput(network->getNode(secondNode))) {
+			if (firstNode == secondNode || isOutput(network.getNode(firstNode)) || isInput(network.getNode(secondNode))) {
 				continue;
 			}
 
-			if (network->getNode(firstNode)->connectsTo(secondNode) || network->getNode(secondNode)->connectsTo(firstNode) || network->checkCircleMaster(network->getNode(firstNode), secondNode)) {
+			if (network.getNode(firstNode).connectsTo(secondNode) || network.getNode(secondNode).connectsTo(firstNode) || network.checkCircleMaster(network.getNode(firstNode), secondNode)) {
 				attempts++;
 				continue;
 			}
@@ -238,17 +238,17 @@ void Species::mutateNetwork(Network * network)
 			nodeMutate();
 		}
 		else {
-			network->mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode));
+			network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode));
 		}
 	}
 }
 
-Network Species::mateNetwork(Network nB, Network nA)
+Network Species::mateNetwork(Network& nB, Network& nA)
 {
 	return Network();
 }
 
-void Species::trainNetworks(double * trainingSet)
+void Species::trainNetworks(vector<vector<vector<double>>>& trainingSet)
 {
 }
 

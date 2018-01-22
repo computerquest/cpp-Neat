@@ -28,12 +28,12 @@ public:
 	int numConnection();
 	void resetWeight();
 
-	Node* getNode(int i);
-	Node* createNode(int send);
+	Node& getNode(int i);
+	Node& createNode(int send);
 	int getNextNodeId();
 	int mutateNode(int from, int to, int innovationA, int innovationB);
-	bool checkCircleMaster(Node* n, int goal);
-	bool checkCircle(Node* n, int goal, int preCheck[]);
+	bool checkCircleMaster(Node& n, int goal);
+	bool checkCircle(Node& n, int goal, int preCheck[]);
 };
 
 Network clone(Network* n);

@@ -5,7 +5,7 @@ Neat::Neat()
 {
 }
 
-Network Neat::start(double * input, int cutoff, double target)
+Network Neat::start(vector<vector<vector<double>>>& input, int cutoff, double target)
 {
 	return Network();
 }
@@ -45,14 +45,12 @@ int Neat::findInnovation(int search[2])
 	return 0;
 }
 
-Species * Neat::getSpecies(int id)
+Species& Neat::getSpecies(int id)
 {
-	return nullptr;
 }
 
-Species * Neat::createSpecies(Network possible[])
+Species& Neat::createSpecies(Network possible[])
 {
-	return nullptr;
 }
 
 void Neat::removeSpecies(int id)

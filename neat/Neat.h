@@ -14,7 +14,7 @@ public:
 
 	Neat();
 
-	Network start(double* input, int cutoff, double target);
+	Network start(vector<vector<vector<double>>>& input, int cutoff, double target);
 	void printNeat();
 	void mutatePopulation();
 	
@@ -25,7 +25,7 @@ public:
 
 	int* getInnovation(int num);
 	int findInnovation(int search[2]);
-	Species* getSpecies(int id);
-	Species* createSpecies(Network possible[]);
+	Species& getSpecies(int id);
+	Species& createSpecies(Network possible[]);
 	void removeSpecies(int id);
 };

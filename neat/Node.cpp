@@ -35,26 +35,26 @@ void Node::recieveInfluence()
 	}
 }
 
-Connection * Node::addSendCon(Connection c)
+Connection& Node::addSendCon(Connection c)
 {
 	send.push_back(c);
 
-	return &(send.back());
+	return (send.back());
 }
 
-Connection * Node::addRecCon(Connection * c)
+Connection& Node::addRecCon(Connection * c)
 {
 	recieve.push_back(c);
 
 	return recieve.back();
 }
 
-Connection * Node::getRecCon(int i)
+Connection& Node::getRecCon(int i)
 {
 	return recieve[i];
 }
 
-Connection * Node::getSendCon(int i)
+Connection& Node::getSendCon(int i)
 {
 	return &send[i];
 }
@@ -85,4 +85,20 @@ void Node::setInfluence(double a)
 	for (int i = 0; i < recieve.size(); i++) {
 		recieve[i]->notifyInfluence();
 	}
+}
+
+bool isInput(Node & n)
+{
+	if (n.recieve.size() > 0) {
+		return false;
+	}
+	return true;
+}
+
+bool isOutput(Node & n)
+{
+	if (n.send.size() > 0) {
+		return false;
+	}
+	return true;
 }

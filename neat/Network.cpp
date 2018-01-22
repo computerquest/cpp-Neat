@@ -178,7 +178,7 @@ void Network::removeInnovation(int num)
 
 void Network::mutateConnection(int from, int to, int innovation)
 {
-	getNode(to)->addRecCon(getNode(from)->addSendCon(Connection(getNode(from), getNode(to), innovation)));
+	getNode(to).addRecCon(getNode(from).addSendCon(Connection(&getNode(from), &getNode(to), innovation)));
 	addInnovation(innovation);
 }
 
@@ -202,12 +202,12 @@ void Network::resetWeight()
 	}
 }
 
-Node * Network::getNode(int i)
+Node& Network::getNode(int i)
 {
 	return &nodeList[i];
 }
 
-Node * Network::createNode(int send)
+Node& Network::createNode(int send)
 {
 	nodeList.push_back(Node(nodeList.size(), send));
 	return nodeList.back();
@@ -220,35 +220,35 @@ int Network::getNextNodeId()
 
 int Network::mutateNode(int from, int to, int innovationA, int innovationB)
 {
-	Node* fromNode = getNode(from);
-	Node* toNode = getNode(to);
-	Node* newNode = createNode(100);
+	Node& fromNode = getNode(from);
+	Node& toNode = getNode(to);
+	Node& newNode = createNode(100);
 
 	addInnovation(innovationA);
 	addInnovation(innovationB);
 
 	//changes the connection recieved by toNode to a connection sent by newNode
-	for (int i = 0; i < toNode->recieve.size(); i++) {
-		if (fromNode == toNode->recieve[i]->nodeFrom) {
-			removeInnovation(toNode->recieve[i].innovation);
-			toNode->recieve[i] = newNode->addSendCon(Connection(newNode, toNode, innovationB));
+	for (int i = 0; i < toNode.recieve.size(); i++) {
+		if (fromNode == toNode.recieve[i].nodeFrom) {
+			removeInnovation(toNode.recieve[i].innovation);
+			toNode.recieve[i] = newNode.addSendCon(Connection(&newNode, &toNode, innovationB));
 		}
 	}
 
 	//modifies the connection from fromNode by changing the toNode for the connection to newNode from toNode
-	for (int i = 0; i < fromNode->send.size(); i++) {
-		if (fromNode->send[i].nodeTo->id == toNode->id) {
-			fromNode->send[i].nodeTo = newNode;
-			fromNode->send[i].innovation = innovationA;
+	for (int i = 0; i < fromNode.send.size(); i++) {
+		if (fromNode.send[i].nodeTo.id == toNode.id) {
+			fromNode.send[i].nodeTo = newNode;
+			fromNode.send[i].innovation = innovationA;
 
-			newNode->addRecCon(&(fromNode->send[i]));
+			newNode.addRecCon(&(fromNode.send[i]));
 		}
 	}
 
-	return newNode->id;
+	return newNode.id;
 }
 
-bool Network::checkCircleMaster(Node * n, int goal)
+bool Network::checkCircleMaster(Node& n, int goal)
 {
 	const int s = nodeList.size();
 	int* preCheck = new int[s];
@@ -263,21 +263,21 @@ bool Network::checkCircleMaster(Node * n, int goal)
 	return ans;
 }
 
-bool Network::checkCircle(Node * n, int goal, int preCheck[])
+bool Network::checkCircle(Node& n, int goal, int preCheck[])
 {
 	bool ans = false;
-	if (n->id == goal) {
+	if (n.id == goal) {
 		return true;
 	}
 
 	//checks for the precheck
-	if (preCheck[n->id] == -1) {
+	if (preCheck[n.id] == -1) {
 		return false;
 	}
 
 	//checks next stop down
-	for (int i = 0; i < n->recieve.size(); i++) {
-		ans = checkCircle(n->recieve[i].nodeFrom, goal, preCheck);
+	for (int i = 0; i < n.recieve.size(); i++) {
+		ans = checkCircle(n.recieve[i].nodeFrom, goal, preCheck);
 		if (ans) {
 			break;
 		}
@@ -285,7 +285,7 @@ bool Network::checkCircle(Node * n, int goal, int preCheck[])
 
 	//sets the precheck
 	if (!ans) {
-		preCheck[n->id] = -1;
+		preCheck[n.id] = -1;
 	}
 
 	return ans;

@@ -17,14 +17,14 @@ public:
 
 	void recieveValue();
 	void recieveInfluence();
-	Connection* addSendCon(Connection c);
-	Connection* addRecCon(Connection* c);
-	Connection* getRecCon(int i);
-	Connection* getSendCon(int i);
+	Connection& addSendCon(Connection c);
+	Connection& addRecCon(Connection* c);
+	Connection& getRecCon(int i);
+	Connection& getSendCon(int i);
 	bool connectsTo(int id);
 	void setValue(double value);
 	void setInfluence(double value);
 };
 
-bool isInput(Node* n);
-bool isOutput(Node* n);
+bool isInput(Node& n);
+bool isOutput(Node& n);
