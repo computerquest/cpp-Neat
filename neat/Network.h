@@ -8,8 +8,8 @@ public:
 	vector<Node> nodeList;
 	vector<int> innovation;
 	double learningRate;
-	vector<Node*> input;
-	vector<Node*> output;
+	vector<Node&> input;
+	vector<Node&> output;
 	double fitness;
 	double adjustedFitness;
 	int networkId;
@@ -17,8 +17,8 @@ public:
 	
 	Network(int input, int output, int id, int species, double learningRate, bool addCon);
 	void printNetwork();
-	vector<double> process(double input[]);
-	double backProp(double input[], double desired[]);
+	vector<double> process(vector<double>& input);
+	double backProp(vector<double>& input, vector<double>& desired);
 	double trainset(vector<vector<vector<double>>> input, int lim);
 	int getInnovation(int pos);
 	void addInnovation(int num);

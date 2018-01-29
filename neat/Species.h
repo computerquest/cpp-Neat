@@ -35,5 +35,5 @@ public:
 	void trainNetworks(vector<vector<vector<double>>>& trainingSet);
 	void mateSpecies();
 	void adjustFitness();
-	int angNode();
+	int avgNode();
 };

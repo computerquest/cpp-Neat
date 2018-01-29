@@ -369,7 +369,7 @@ void Species::adjustFitness()
 	}
 }
 
-int Species::angNode()
+int Species::avgNode()
 {
 	if (network.size() == 0) {
 		return 0;

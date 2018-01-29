@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Network.h"
 #include "Connection.h"
+#include "Node.h"
 using namespace std;
 
 Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon)
@@ -20,7 +21,7 @@ Network::Network(int inputI, int outputI, int id, int species, double learningRa
 		input[i] = createNode(100);
 		if (addCon) {
 			for (int a = 0; a < outputI; a++) {
-				mutateConnection(input[i]->id, output[a]->id, startInov);
+				mutateConnection(input[i].id, output[a].id, startInov);
 				startInov++;
 			}
 		}
@@ -32,27 +33,27 @@ void Network::printNetwork()
 {
 }
 
-vector<double> Network::process(double input[]) {
+vector<double> Network::process(vector<double>& input) {
 	//set input values
 	for (int i = 0; i < sizeof(input) / sizeof(input[0]); i++) {
 		if (i < this->input.size()) {
-			this->input[i]->setValue(input[i]);
+			this->input[i].setValue(input[i]);
 		}
 		else {
-			this->input[i]->setValue(1);
+			this->input[i].setValue(1);
 		}
 	}
 
 	vector<double> ans;
 	//values are calculated via connections and nodes signalling
 	for (int i = 0; i < output.size(); i++) {
-		ans[i] = output[i]->value;
+		ans[i] = output[i].value;
 	}
 
 	return ans;
 }
 
-double Network::backProp(double input[], double desired[])
+double Network::backProp(vector<double>& input, vector<double>& desired)
 {
 	process(input); //set the values for the input
 
@@ -60,16 +61,16 @@ double Network::backProp(double input[], double desired[])
 
 					  //this will calc all the influence
 	for (int i = 0; i < output.size(); i++) {
-		output[i].setInfluence(output[i]->value - desired[i]);
-		error += abs(output[i]->value - desired[i]);
+		output[i].setInfluence(output[i].value - desired[i]);
+		error += abs(output[i].value - desired[i]);
 	}
 
 	//all the influence is set the same way as values so it is set via connections and signalling
 
 	//actually adjusts the weights
 	for (int i = 0; i < nodeList.size(); i++) {
-		for (int a = 0; a < nodeList[i].receive.size(); a++) {
-			nodeList[i].receive[a]->nextWeight -= (nodeList[i].receive[a]->nodeFrom->value) * nodeList[i].influence * learningRate;
+		for (int a = 0; a < nodeList[i].recieve.size(); a++) {
+			nodeList[i].recieve[a]->nextWeight -= (nodeList[i].recieve[a]->nodeFrom->value) * nodeList[i].influence * learningRate;
 		}
 	}
 
@@ -178,7 +179,7 @@ void Network::removeInnovation(int num)
 
 void Network::mutateConnection(int from, int to, int innovation)
 {
-	getNode(to).addRecCon(getNode(from).addSendCon(Connection(&getNode(from), &getNode(to), innovation)));
+	getNode(to).addRecCon(&getNode(from).addSendCon(Connection(&getNode(from), &getNode(to), innovation)));
 	addInnovation(innovation);
 }
 
@@ -204,12 +205,13 @@ void Network::resetWeight()
 
 Node& Network::getNode(int i)
 {
-	return &nodeList[i];
+	return nodeList[i];
 }
 
 Node& Network::createNode(int send)
 {
-	nodeList.push_back(Node(nodeList.size(), send));
+	int a = nodeList.size();
+	nodeList.push_back(Node(a, send));
 	return nodeList.back();
 }
 
@@ -229,16 +231,16 @@ int Network::mutateNode(int from, int to, int innovationA, int innovationB)
 
 	//changes the connection recieved by toNode to a connection sent by newNode
 	for (int i = 0; i < toNode.recieve.size(); i++) {
-		if (fromNode == toNode.recieve[i].nodeFrom) {
-			removeInnovation(toNode.recieve[i].innovation);
-			toNode.recieve[i] = newNode.addSendCon(Connection(&newNode, &toNode, innovationB));
+		if (fromNode.id == toNode.recieve[i]->nodeFrom->id) {
+			removeInnovation(toNode.recieve[i]->innovation);
+			toNode.recieve[i] = &newNode.addSendCon(Connection(&newNode, &toNode, innovationB));
 		}
 	}
 
 	//modifies the connection from fromNode by changing the toNode for the connection to newNode from toNode
 	for (int i = 0; i < fromNode.send.size(); i++) {
-		if (fromNode.send[i].nodeTo.id == toNode.id) {
-			fromNode.send[i].nodeTo = newNode;
+		if (fromNode.send[i].nodeTo->id == toNode.id) {
+			fromNode.send[i].nodeTo = &newNode;
 			fromNode.send[i].innovation = innovationA;
 
 			newNode.addRecCon(&(fromNode.send[i]));
@@ -277,7 +279,7 @@ bool Network::checkCircle(Node& n, int goal, int preCheck[])
 
 	//checks next stop down
 	for (int i = 0; i < n.recieve.size(); i++) {
-		ans = checkCircle(n.recieve[i].nodeFrom, goal, preCheck);
+		ans = checkCircle((*n.recieve[i]->nodeFrom), goal, preCheck);
 		if (ans) {
 			break;
 		}
