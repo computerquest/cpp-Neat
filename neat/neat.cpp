@@ -114,32 +114,32 @@ void Neat::speciate(Network& network)
 		//remove from the old species
 		Species& s = getSpecies(lastSpec);
 		//removes current and checks to see if the rest need to be speciated
-		s.removeNetwork(network.networkId)
-			for (int i = 0; i < len(s.network); i++ {
-				if s.network[i].networkId != network.networkId && s.network[i].species == s.id{
-					if compareGenome(len(s.network[i].nodeList), s.network[i].innovation, s.avgNode(), s.commonInnovation) > compareGenome(len(s.network[i].nodeList), s.network[i].innovation, newSpec.avgNode(), newSpec.commonInnovation) {
-						newSpec.addNetwork(s.network[i])
-							s.removeNetwork(s.network[i].networkId)
-							i--
-					}
+		s.removeNetwork(network.networkId);
+		for (int i = 0; i < s.network.size(); i++) {
+			if (s.network[i]->networkId != network.networkId && s.network[i]->species == s.id) {
+				if (compareGenome(s.network[i]->nodeList.size(), s.network[i]->innovation, s.avgNode(), s.commonInnovation) > compareGenome(s.network[i]->nodeList.size(), s.network[i]->innovation, newSpec.avgNode(), newSpec.commonInnovation)) {
+					newSpec.addNetwork(*s.network[i]);
+					s.removeNetwork(s.network[i]->networkId);
+					i--;
 				}
 			}
+		}
 
 		//checks to see if new species meets size requirement
-		if len(newSpec.network) < 2 {
+		if (newSpec.network.size() < 2) {
 			//reassign creator to next best in order to prevent a loop
-			newSpec.removeNetwork(network.networkId)
-				n.getSpecies(bestSpec).addNetwork(network) //could be problem because index changes when make new species (maybe because should be added to the end)
+			newSpec.removeNetwork(network.networkId);
+			getSpecies(bestSpec).addNetwork(network); //could be problem because index changes when make new species (maybe because should be added to the end)
 
-				n.removeSpecies(newSpec.id)
+			removeSpecies(newSpec.id);
 		}
 	}
-	else if network.species != bestSpec{
-	lastSpec: = n.getSpecies(network.species)
-			  n.getSpecies(bestSpec).addNetwork(network)
+	else if (network.species != bestSpec) {
+		Species& lastSpec = getSpecies(network.species);
+		getSpecies(bestSpec).addNetwork(network);
 
-		if lastSpec != nil{
-			lastSpec.removeNetwork(network.networkId)
+		if (lastSpec.network.size() != 0) {
+			lastSpec.removeNetwork(network.networkId);
 		}
 	}
 }
