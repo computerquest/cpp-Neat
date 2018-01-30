@@ -260,6 +260,7 @@ bool Network::checkCircleMaster(Node& n, int goal)
 	}
 
 	bool ans = checkCircle(n, goal, preCheck);
+
 	delete[] preCheck;
 
 	return ans;

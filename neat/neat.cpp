@@ -79,21 +79,21 @@ Network Neat::start(vector<vector<vector<double>>>& input, int cutoff, double ta
 			}
 		}
 
-			   //compares the best
-			   if (bestIndex != -1 ) {
-				   bestNet = &clone(&network[bestIndex]);
-				   strikes = cutoff;
-			   }
-			   else {
-				   strikes--;
-				   mutatePopulation();
-					   if (z % 5 != 0) {
-						   speciateAll();
-						   checkSpecies();
-					   }
-			   }
+		//compares the best
+		if (bestIndex != -1) {
+			bestNet = &clone(&network[bestIndex]);
+			strikes = cutoff;
+		}
+		else {
+			strikes--;
+			mutatePopulation();
+			if (z % 5 != 0) {
+				speciateAll();
+				checkSpecies();
+			}
+		}
 
-			   cout << "epoch:" << z << bestFit << endl;
+		cout << "epoch:" << z << bestFit << endl;
 	}
 
 	return *bestNet;

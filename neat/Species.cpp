@@ -206,7 +206,7 @@ void Species::mutateNetwork(Network& network)
 
 		//picks a node
 		while (!ans) {
-			firstNode = int(rand() *nodeRange);
+			firstNode = int(rand()%nodeRange);
 
 			if (network.getNode(firstNode).send.size() > 0) {
 				ans = true;
@@ -214,7 +214,7 @@ void Species::mutateNetwork(Network& network)
 		}
 
 		//picks a random connection from firstNode and gets the id
-		secondNode = network.getNode(firstNode).send[int(rand()*network.getNode(firstNode).send.size())].nodeTo->id; //int(r.Int63n(int64(nodeRange)));
+		secondNode = network.getNode(firstNode).send[int(rand()%network.getNode(firstNode).send.size())].nodeTo->id; //int(r.Int63n(int64(nodeRange)));
 
 		network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode));
 	};
@@ -232,8 +232,8 @@ void Species::mutateNetwork(Network& network)
 							   //find 2 unconnected nodes
 							   //for ans && attempts <= 10 {
 		while (attempts <= 10) {
-			firstNode = rand()*nodeRange;
-			secondNode = rand()*nodeRange;
+			firstNode = rand()%nodeRange;
+			secondNode = rand()%nodeRange;
 
 			if (firstNode == secondNode || isOutput(network.getNode(firstNode)) || isInput(network.getNode(secondNode))) {
 				continue;
