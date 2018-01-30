@@ -8,7 +8,7 @@ class Neat {
 public:
 	double nodeMutate;
 	vector<Network> network;
-	vector<int[2]> connectionInnovation;
+	vector<int*> connectionInnovation;
 	double speciesThreshold;
 	vector<Species> species;
 	int speciesId;

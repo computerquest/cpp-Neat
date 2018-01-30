@@ -5,15 +5,16 @@ using namespace std;
 
 class Species {
 public:
+	static vector<int*>* innovationDict;
+	
 	vector<Network*> network;
 	vector<int> connectionInnovation;
 	vector<int> commonInnovation;
-	vector<int[2]>& innovationDict;
 	int id;
 	double mutate;
 
-	Species(int id, vector<Network*> networks, vector<int[2]> &innovations, double mutate);
-	Species(int id, vector<Network>& networks, vector<int[2]>& innovations, double mutate);
+	Species(int id, vector<Network*> networks, double mutate);
+	Species(int id, vector<Network>& networks, double mutate);
 
 	void addCI(int a);
 	void removeCI(int a);

@@ -12,21 +12,21 @@ Network::Network(int inputI, int outputI, int id, int species, double learningRa
 
 	//create output nodes
 	for (int i = 0; i < outputI; i++) {
-		output[i] = createNode(0);
+		output[i] = &createNode(0);
 	}
 
 	//creates the input nodes and adds them to the network
 	int startInov = 0; //this should work
 	for (int i = 0; i < inputI; i++) {
-		input[i] = createNode(100);
+		input[i] = &createNode(100);
 		if (addCon) {
 			for (int a = 0; a < outputI; a++) {
-				mutateConnection(input[i].id, output[a].id, startInov);
+				mutateConnection(input[i]->id, output[a]->id, startInov);
 				startInov++;
 			}
 		}
 	}
-	input[inputI] = createNode(100); //bias starts unconnected and will form connections over time
+	input[inputI] = &createNode(100); //bias starts unconnected and will form connections over time
 }
 
 void Network::printNetwork()
@@ -37,17 +37,17 @@ vector<double> Network::process(vector<double>& input) {
 	//set input values
 	for (int i = 0; i < sizeof(input) / sizeof(input[0]); i++) {
 		if (i < this->input.size()) {
-			this->input[i].setValue(input[i]);
+			this->input[i]->setValue(input[i]);
 		}
 		else {
-			this->input[i].setValue(1);
+			this->input[i]->setValue(1);
 		}
 	}
 
 	vector<double> ans;
 	//values are calculated via connections and nodes signalling
 	for (int i = 0; i < output.size(); i++) {
-		ans[i] = output[i].value;
+		ans[i] = output[i]->value;
 	}
 
 	return ans;
@@ -61,8 +61,8 @@ double Network::backProp(vector<double>& input, vector<double>& desired)
 
 					  //this will calc all the influence
 	for (int i = 0; i < output.size(); i++) {
-		output[i].setInfluence(output[i].value - desired[i]);
-		error += abs(output[i].value - desired[i]);
+		output[i]->setInfluence(output[i]->value - desired[i]);
+		error += abs(output[i]->value - desired[i]);
 	}
 
 	//all the influence is set the same way as values so it is set via connections and signalling

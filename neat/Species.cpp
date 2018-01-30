@@ -5,7 +5,9 @@
 #include<cstdlib>// for srand function.
 using namespace std;
 
-Species::Species(int id, vector<Network*> networks, vector<int[2]>& innovations, double mutate) : innovationDict(innovations)
+vector<int*>* Species::innovationDict;
+
+Species::Species(int id, vector<Network*> networks, double mutate)
 {
 	this->id = id;
 	this->mutate = mutate;
@@ -14,7 +16,7 @@ Species::Species(int id, vector<Network*> networks, vector<int[2]>& innovations,
 	updateStereotype();
 }
 
-Species::Species(int id, vector<Network>& networks, vector<int[2]>& innovations, double mutate) : innovationDict(innovations)
+Species::Species(int id, vector<Network>& networks, double mutate)
 {
 	this->id = id;
 	this->mutate = mutate;
@@ -48,7 +50,7 @@ void Species::removeCI(int a)
 
 int& Species::getInovOcc(int i)
 {
-	return (connectionInnovation[i]);
+	return (connectionInnovation)[i];
 }
 
 int& Species::incrementInov(int i)
@@ -90,16 +92,17 @@ void Species::checkCI()
 
 int* Species::getInnovationRef(int num)
 {
-	return (innovationDict)[num];
+	return (*innovationDict)[num];
 }
 
 int Species::createNewInnovation(int values[2])
 {
 	//dictControl.Lock() TODO: fix the multithread
-	(innovationDict).push_back({ values[0], values[1] }); //TODO: simplify
+	int c[] = { values[0], values[1] };
+	(*innovationDict).push_back(c); //TODO: simplify
 	//defer dictControl.Unlock()
 
-	return innovationDict.size() - 1;
+	return innovationDict->size() - 1;
 }
 
 void Species::sortInnovation()
@@ -179,7 +182,7 @@ void Species::mutateNetwork(Network& network)
 	//finds or adds innovation numbers and returns the innovation
 	auto addConnectionInnovation = [&](int numFrom, int numTo) {
 		//checks to see if preexisting innovation
-		int maxPos = innovationDict.size();
+		int maxPos = innovationDict->size();
 		for (int i = 0; i < maxPos; i++) {
 			int* pos = getInnovationRef(i);
 			if (pos[1] == numTo && pos[0] == numFrom) {
