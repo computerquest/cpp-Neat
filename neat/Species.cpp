@@ -297,7 +297,7 @@ Network Species::mateNetwork(vector<int>& nB, vector<int>& nA, int nodeNum, int 
 }
 
 //TODO: multithread
-void Species::trainNetworks(vector<vector<vector<double>>>& trainingSet)
+void Species::trainNetworks(vector<pair<vector<double>, vector<double>>>& trainingSet)
 {
 	for (int i = 0; i < network.size(); i++) {
 		network[i]->trainset(trainingSet, 10000); //I have capped the number of interations intentionaly to control training time

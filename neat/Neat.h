@@ -1,6 +1,7 @@
 #pragma once
 #include "Network.h"
 #include "Species.h"
+#include <utility>
 using namespace std;
 
 class Neat {
@@ -14,7 +15,7 @@ public:
 
 	Neat(int numNetworks, int input, int output, double mutate, double lr);
 
-	Network start(vector<vector<vector<double>>>& input, int cutoff, double target);
+	Network start(vector<pair<vector<double>,vector<double>>>& input, int cutoff, double target);
 	//void printNeat();
 	void mutatePopulation();
 	

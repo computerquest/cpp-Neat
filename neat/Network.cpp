@@ -77,7 +77,7 @@ double Network::backProp(vector<double>& input, vector<double>& desired)
 	return error;
 }
 
-double Network::trainset(vector<vector<vector<double>>>& input, int lim)
+double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, int lim)
 {
 	double errorChange = -1000.0; //percent of error change
 	double lastError = 1000.0;
@@ -99,8 +99,8 @@ double Network::trainset(vector<vector<vector<double>>>& input, int lim)
 		}
 
 		//trains each input
-		for (int i = 0; i < sizeof(input) / sizeof(input[0]); i++) { //TODO: might not work
-			currentError += backProp(input[i][0], input[i][1]);
+		for (int i = 0; i < input.size(); i++) { //TODO: might not work
+			currentError += backProp(input[i].first, input[i].second);
 		}
 
 		//updates all the weight
@@ -137,9 +137,9 @@ double Network::trainset(vector<vector<vector<double>>>& input, int lim)
 	//calculate the final error
 	double final = 0.0;
 	for (int i = 0; i < input.size(); i++) {
-		vector<double> stuff = process(input[i][0]);
+		vector<double> stuff = process(input[i].first);
 		for (int a = 0; a < stuff.size(); a++) {
-			final += abs(stuff[a] - input[i][1][a]);
+			final += abs(stuff[a] - input[i].second[a]);
 		}
 	}
 

@@ -5,6 +5,7 @@
 #include <algorithm>    // std::find
 #include <iostream>
 #include <vector>       // std::vector
+#include <utility>
 using namespace std;
 
 Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : nodeMutate(mutate)
@@ -34,7 +35,7 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 }
 
 //TODO: mthread
-Network Neat::start(vector<vector<vector<double>>>& input, int cutoff, double target)
+Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cutoff, double target)
 {
 	int strikes = cutoff;
 	Network* bestNet;
