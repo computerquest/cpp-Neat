@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "Connection.h"
 #include "Node.h"
-#include <cstdlib>
+#include <stdio.h>      /* printf, scanf, puts, NULL */
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
 using namespace std;
 
 Connection::Connection(Node * fromNode, Node * toNode, int inNumber)

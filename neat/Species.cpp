@@ -14,6 +14,18 @@ Species::Species(int id, vector<Network*> networks, vector<int[2]>& innovations,
 	updateStereotype();
 }
 
+Species::Species(int id, vector<Network>& networks, vector<int[2]>& innovations, double mutate) : innovationDict(innovations)
+{
+	this->id = id;
+	this->mutate = mutate;
+	
+	for (int i = 0; i < networks.size(); i++) {
+		this->network.push_back(&networks[i]);
+	}
+
+	updateStereotype();
+}
+
 void Species::addCI(int a)
 {
 	for (int i = 0; i < commonInnovation.size(); i++) {
@@ -36,7 +48,7 @@ void Species::removeCI(int a)
 
 int& Species::getInovOcc(int i)
 {
-	return &(connectionInnovation[i]);
+	return (connectionInnovation[i]);
 }
 
 int& Species::incrementInov(int i)
@@ -84,7 +96,7 @@ int* Species::getInnovationRef(int num)
 int Species::createNewInnovation(int values[2])
 {
 	//dictControl.Lock() TODO: fix the multithread
-	(innovationDict).push_back(values);
+	(innovationDict).push_back({ values[0], values[1] }); //TODO: simplify
 	//defer dictControl.Unlock()
 
 	return innovationDict.size() - 1;
@@ -93,20 +105,20 @@ int Species::createNewInnovation(int values[2])
 void Species::sortInnovation()
 {
 	for (int i = 0; i < network.size(); i++) {
-		sort(network[i]->innovaton.begin(), network[i]->innovaton.end());
+		sort(network[i]->innovation.begin(), network[i]->innovation.end());
 	}
 }
 
 Network& Species::getNetworkAt(int a)
 {
-	return network[a];
+	return *network[a];
 }
 
 void Species::removeNetwork(int id)
 {
 	for (int i = 0; i < network.size(); i++) {
-		if (network[i].networkId == id) {
-			vector<int> inn = network[i].innovation;
+		if (network[i]->networkId == id) {
+			vector<int> inn = network[i]->innovation;
 			network.erase(network.begin() + i);
 
 			for (int a = 0; a < inn.size(); a++) {
@@ -121,8 +133,8 @@ void Species::removeNetwork(int id)
 Network& Species::getNetwork(int id)
 {
 	for (int i = 0; i < network.size(); i++) {
-		if (network[i].networkId == id) {
-			return network[i];
+		if (network[i]->networkId == id) {
+			return *network[i];
 		}
 	}
 }
@@ -152,9 +164,9 @@ void Species::updateStereotype()
 	}
 
 	for (int i = 0; i < network.size(); i++) {
-		numNodes += network[i].nodeList.size();
-		for (int a = 0; a < network[i].innovation.size(); a++) {
-			incrementInov(network[i].innovation[a]);
+		numNodes += network[i]->nodeList.size();
+		for (int a = 0; a < network[i]->innovation.size(); a++) {
+			incrementInov(network[i]->innovation[a]);
 		}
 	}
 }
@@ -202,7 +214,7 @@ void Species::mutateNetwork(Network& network)
 		}
 
 		//picks a random connection from firstNode and gets the id
-		secondNode = network.getNode(firstNode).send[int(rand()*network.getNode(firstNode).send.size())].nodeTo.id; //int(r.Int63n(int64(nodeRange)));
+		secondNode = network.getNode(firstNode).send[int(rand()*network.getNode(firstNode).send.size())].nodeTo->id; //int(r.Int63n(int64(nodeRange)));
 
 		network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode));
 	};
@@ -271,8 +283,8 @@ Network Species::mateNetwork(vector<int>& nB, vector<int>& nA, int nodeNum, int 
 	//add unique nB innovation
 	for (int i = 0; i < nB.size(); i++) {
 		int* inb = getInnovationRef(nB[i]);
-		int firstNode = inb[nB[i]][0];
-		int secondNode = inb[nB[i]][1];
+		int firstNode = inb[0];
+		int secondNode = inb[1];
 
 		//checks to make sure their is no conflict in possible innovations
 		if (!ans.containsInnovation(nB[i]) && !(ans.getNode(firstNode).connectsTo(secondNode) || ans.getNode(secondNode).connectsTo(firstNode)) && !ans.checkCircleMaster(ans.getNode(firstNode), secondNode)) {
@@ -288,7 +300,7 @@ Network Species::mateNetwork(vector<int>& nB, vector<int>& nA, int nodeNum, int 
 void Species::trainNetworks(vector<vector<vector<double>>>& trainingSet)
 {
 	for (int i = 0; i < network.size(); i++) {
-		network[i].trainSet(trainingSet, 10000); //I have capped the number of interations intentionaly to control training time
+		network[i]->trainset(trainingSet, 10000); //I have capped the number of interations intentionaly to control training time
 	}
 }
 
@@ -307,36 +319,36 @@ void Species::mateSpecies()
 			if (getNetworkAt(a).adjustedFitness > localMax && getNetworkAt(a).adjustedFitness <= lastValue) {
 				bool good = true;
 				for (int b = i - 1; b >= 0; b--) {
-					if (getNetworkAt(a).networkId == sortedNetwork[b].networkId) {
+					if (getNetworkAt(a).networkId == sortedNetwork[b]->networkId) {
 						good = false;
 						break;
 					}
 
-					if (sortedNetwork[b].adjustedFitness != getNetworkAt(a).adjustedFitness) {
+					if (sortedNetwork[b]->adjustedFitness != getNetworkAt(a).adjustedFitness) {
 						break;
 					}
 				}
 
 				if (good) {
-					localMax = network[a].adjustedFitness;
+					localMax = network[a]->adjustedFitness;
 					localIndex = a;
 				}
 			}
 		}
 
-		sortedNetwork[i] = getNetworkAt(localIndex);
-		sumFitness += sortedNetwork[i].adjustedFitness;
-		lastValue = sortedNetwork[i].adjustedFitness;
+		sortedNetwork[i] = &getNetworkAt(localIndex);
+		sumFitness += sortedNetwork[i]->adjustedFitness;
+		lastValue = sortedNetwork[i]->adjustedFitness;
 	}
 
 	vector<Network> newNets;
 	int count = 0;
 	//mates networks
 	for (int i = 0; i < sortedNetwork.size(); i++) {
-		int numKids = int(sortedNetwork[i].adjustedFitness / sumFitness * newNets.size());
+		int numKids = int(sortedNetwork[i]->adjustedFitness / sumFitness * newNets.size());
 		int numMade = numKids;
 		for (int a = 1; count < newNets.size() && a + i < sortedNetwork.size(); a++) {
-			newNets[count] = mateNetwork(*sortedNetwork[i], *sortedNetwork[i + a], sortedNetwork[i]->nodeList.size(), sortedNetwork[i + a]->nodeList.size());
+			newNets[count] = mateNetwork(sortedNetwork[i]->innovation, sortedNetwork[i + a]->innovation, sortedNetwork[i]->nodeList.size(), sortedNetwork[i + a]->nodeList.size());
 			count++;
 			numMade--;
 		}
@@ -345,7 +357,7 @@ void Species::mateSpecies()
 	//mutates for remainder of spots available
 	for (int i = 0; count < newNets.size(); i++) {
 		newNets[count] = clone(sortedNetwork[i]);
-		mutateNetwork(&newNets[count]);
+		mutateNetwork(newNets[count]);
 		count++;
 
 		if (i == sortedNetwork.size() - 1) {
@@ -355,7 +367,7 @@ void Species::mateSpecies()
 
 	//sets the id
 	for (int i = 0; i < newNets.size(); i++) {
-		newNets[i].networkId = network[i].networkId;
+		newNets[i].networkId = network[i]->networkId;
 		*network[i] = newNets[i];
 	}
 
@@ -365,7 +377,7 @@ void Species::mateSpecies()
 void Species::adjustFitness()
 {
 	for (int i = 0; i < network.size(); i++) {
-		network[i].adjustedFitness = network[i].fitness / network.size();
+		network[i]->adjustedFitness = network[i]->fitness / network.size();
 	}
 }
 
@@ -376,7 +388,7 @@ int Species::avgNode()
 	}
 int sum = 0;
 	for (int i = 0; i < network.size(); i++) {
-		sum += network[i].nodeList.size();
+		sum += network[i]->nodeList.size();
 	}
 
 	return sum / network.size();

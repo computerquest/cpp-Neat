@@ -13,6 +13,7 @@ public:
 	double mutate;
 
 	Species(int id, vector<Network*> networks, vector<int[2]> &innovations, double mutate);
+	Species(int id, vector<Network>& networks, vector<int[2]>& innovations, double mutate);
 
 	void addCI(int a);
 	void removeCI(int a);

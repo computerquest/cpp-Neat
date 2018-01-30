@@ -46,17 +46,17 @@ Connection& Node::addRecCon(Connection * c)
 {
 	recieve.push_back(c);
 
-	return recieve.back();
+	return *recieve.back();
 }
 
 Connection& Node::getRecCon(int i)
 {
-	return recieve[i];
+	return *recieve[i];
 }
 
 Connection& Node::getSendCon(int i)
 {
-	return &send[i];
+	return send[i];
 }
 
 bool Node::connectsTo(int id)

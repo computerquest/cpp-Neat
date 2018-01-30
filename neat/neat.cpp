@@ -2,6 +2,9 @@
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
+#include <algorithm>    // std::find
+#include <iostream>
+#include <vector>       // std::vector
 using namespace std;
 
 Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : nodeMutate(mutate)
@@ -30,9 +33,70 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 	checkSpecies();
 }
 
+//TODO: mthread
 Network Neat::start(vector<vector<vector<double>>>& input, int cutoff, double target)
 {
-	return Network();
+	int strikes = cutoff;
+	Network* bestNet;
+	double bestFit = 0.0;
+	//var wg sync.WaitGroup
+
+	//initial training
+	for (int i = 0; i < species.size(); i++) {
+		//wg.Add(1)
+		species[i].trainNetworks(input);
+	}
+
+	//wg.Wait()
+
+	for (int z = 0; strikes > 0 && bestFit < target; z++) {
+		//mates
+		for (int i = 0; i < species.size(); i++) {
+			//wg.Add(1)
+			species[i].mateSpecies();//&wg);
+		}
+
+		//wg.Wait()
+
+			//trains
+		for (int i = 0; i < species.size(); i++) {
+			//wg.Add(1)
+			species[i].trainNetworks(input);
+		}
+		//wg.Wait()
+
+		if (z % 5 == 0) {
+			speciateAll();
+			checkSpecies();
+		}
+
+		//determines the best
+		int bestIndex = -1;
+		for (int i = 0; i < network.size(); i++) {
+			if (bestFit < network[i].fitness) {
+				bestFit = network[i].fitness;
+				bestIndex = i;
+			}
+		}
+
+			   //compares the best
+			   if (bestIndex != -1 ) {
+				   bestNet = &clone(&network[bestIndex]);
+				   strikes = cutoff;
+			   }
+			   else {
+				   strikes--;
+				   mutatePopulation();
+					   if (z % 5 != 0) {
+						   speciateAll();
+						   checkSpecies();
+					   }
+			   }
+
+			   cout << "epoch:" << z << bestFit << endl;
+	}
+
+	return *bestNet;
 }
 
 void Neat::mutatePopulation()
@@ -144,29 +208,76 @@ void Neat::speciate(Network& network)
 	}
 }
 
-double Neat::compareGenome(int node, vector<int> innovation, int nodeA, vector<int> innovationA)
+double Neat::compareGenome(int node, vector<int>& innovation, int nodeA, vector<int>& innovationA)
 {
-	return 0.0;
+	vector<int>* larger;
+	vector<int>*smaller;
+
+	if (innovation.size() > innovationA.size()) {
+		larger = &innovation;
+		smaller = &innovationA;
+	}
+	else {
+		larger = &innovationA;
+		smaller = &innovation;
+	}
+
+	int missing = 0;
+	for (int b = 0; b < larger->size(); b++) {
+		if (find(larger->begin(), larger->end(), (*larger)[b]) == larger->end()) {
+			missing++;
+		}
+	}
+
+	return missing + abs(node - nodeA) / (smaller->size() + ((node + nodeA) / 2));
 }
 
-int * Neat::getInnovation(int num)
+/*int * Neat::getInnovation(int num)
 {
 	return nullptr;
-}
+}*/
 
-int Neat::findInnovation(int search[2])
+/*int Neat::findInnovation(int search[2])
 {
 	return 0;
-}
+}*/
 
 Species& Neat::getSpecies(int id)
 {
+	for (int i = 0; i < species.size(); i++) {
+		if (species[i].id == id) {
+			return species[i];
+		}
+	}
+
+	//TODO: need default return
 }
 
 Species& Neat::createSpecies(vector<Network>& possible)
 {
+	for (int i = 0; i < possible.size(); i++) {
+		possible[i].species = speciesId;
+	}
+
+	species.push_back(Species(speciesId, possible, connectionInnovation, nodeMutate));
+
+	speciesId++;
+
+	return species.back();
 }
 
 void Neat::removeSpecies(int id)
 {
+	for (int i = 0; i < species.size(); i++) {
+		if (species[i].id == id) {
+			vector<Network*>& currentSpecies = species[i].network;
+
+			species.erase(species.begin() + i);
+			for (int a = 0; a < currentSpecies.size(); a++) {
+				if (currentSpecies[a]->species == id) {
+					speciate(*currentSpecies[a]);
+				}
+			}
+		}
+	}
 }

@@ -21,10 +21,10 @@ public:
 	void speciateAll();
 	void checkSpecies();
 	void speciate(Network& n);
-	double compareGenome(int node, vector<int> innovation, int nodeA, vector<int> innovationA);
+	double compareGenome(int node, vector<int>& innovation, int nodeA, vector<int>& innovationA);
 
-	int* getInnovation(int num);
-	int findInnovation(int search[2]);
+	//int* getInnovation(int num);
+	//int findInnovation(int search[2]);
 	Species& getSpecies(int id);
 	Species& createSpecies(vector<Network>& possible);
 	void removeSpecies(int id);

@@ -77,7 +77,7 @@ double Network::backProp(vector<double>& input, vector<double>& desired)
 	return error;
 }
 
-double Network::trainset(vector<vector<vector<double>>> input, int lim)
+double Network::trainset(vector<vector<vector<double>>>& input, int lim)
 {
 	double errorChange = -1000.0; //percent of error change
 	double lastError = 1000.0;
