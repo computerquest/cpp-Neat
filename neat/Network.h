@@ -8,8 +8,8 @@ public:
 	vector<Node> nodeList;
 	vector<int> innovation;
 	double learningRate;
-	vector<Node&> input;
-	vector<Node&> output;
+	vector<Node*> input;
+	vector<Node*> output;
 	double fitness;
 	double adjustedFitness;
 	int networkId;

@@ -11,7 +11,8 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 {
 	for (int i = output; i < input + output; i++) {
 		for (int a = 0; a < output; a++) {
-			connectionInnovation.push_back({ i,a });
+			int c[] = { i,a };
+			connectionInnovation.push_back(c);
 		}
 	}
 
@@ -20,6 +21,7 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 	}
 
 	createSpecies(vector<Network>(network.begin() + 0, network.begin() + network.size() % 5 + network.size() / 5));
+	species[0].innovationDict = &connectionInnovation;
 	for (int i = network.size() % 5 + (network.size() / 5); i + (network.size() / 5) <= network.size(); i += (network.size() / 5)) {
 		createSpecies(vector<Network>(network.begin() + i, network.begin() + i + (network.size() / 5)));
 	}
@@ -37,7 +39,7 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 Network Neat::start(vector<vector<vector<double>>>& input, int cutoff, double target)
 {
 	int strikes = cutoff;
-	Network* bestNet;
+	Network* bestNet = nullptr;
 	double bestFit = 0.0;
 	//var wg sync.WaitGroup
 
@@ -259,7 +261,7 @@ Species& Neat::createSpecies(vector<Network>& possible)
 		possible[i].species = speciesId;
 	}
 
-	species.push_back(Species(speciesId, possible, connectionInnovation, nodeMutate));
+	species.push_back(Species(speciesId, possible, nodeMutate));
 
 	speciesId++;
 
