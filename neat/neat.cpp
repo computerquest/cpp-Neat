@@ -17,7 +17,9 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 		}
 	}
 
-	for (int i = 0; i < network.size(); i++) {
+	network.reserve(numNetworks);
+
+	for (int i = 0; i < numNetworks; i++) {
 		network.push_back(Network(input, output, i, 0, lr, true));
 	}
 
@@ -126,11 +128,11 @@ void Neat::checkSpecies()
 		vector<double> values(species.size());
 		for (int a = 0; a < species.size(); a++) {
 			if (a == i) {
-				values[a] = 100.0;
+				values.push_back(100.0);
 				continue;
 			}
 
-			values[a] = compareGenome(species[i].avgNode(), species[i].commonInnovation, species[a].avgNode(), species[a].commonInnovation);
+			values.push_back(compareGenome(species[i].avgNode(), species[i].commonInnovation, species[a].avgNode(), species[a].commonInnovation));
 		}
 
 		int lValue = 1000.0;
@@ -152,7 +154,7 @@ void Neat::speciate(Network& network)
 	vector<double> values(species.size());
 
 	for (int i = 0; i < species.size(); i++) {
-		values[i] = compareGenome(network.nodeList.size(), network.innovation, species[i].avgNode(), species[i].commonInnovation);
+		values.push_back(compareGenome(network.nodeList.size(), network.innovation, species[i].avgNode(), species[i].commonInnovation));
 	}
 
 	//this should be faster than sorting the whole thing (it also retains position information)

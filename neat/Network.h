@@ -16,6 +16,8 @@ public:
 	int species;
 	
 	Network(int input, int output, int id, int species, double learningRate, bool addCon);
+	Network(); // do not use
+
 	void printNetwork();
 	vector<double> process(vector<double>& input);
 	double backProp(vector<double>& input, vector<double>& desired);

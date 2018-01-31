@@ -6,19 +6,20 @@ using namespace std;
 
 Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon)
 {
+	nodeList.reserve(100);
 	networkId = id;
 	this->learningRate = learningRate;
 	this->species = species;
 
 	//create output nodes
 	for (int i = 0; i < outputI; i++) {
-		output[i] = &createNode(0);
+		output.push_back(&createNode(0));
 	}
 
 	//creates the input nodes and adds them to the network
 	int startInov = 0; //this should work
 	for (int i = 0; i < inputI; i++) {
-		input[i] = &createNode(100);
+		input.push_back(&createNode(100));
 		if (addCon) {
 			for (int a = 0; a < outputI; a++) {
 				mutateConnection(input[i]->id, output[a]->id, startInov);
@@ -26,7 +27,11 @@ Network::Network(int inputI, int outputI, int id, int species, double learningRa
 			}
 		}
 	}
-	input[inputI] = &createNode(100); //bias starts unconnected and will form connections over time
+	input.push_back(&createNode(100)); //bias starts unconnected and will form connections over time
+}
+
+Network::Network()
+{
 }
 
 void Network::printNetwork()
@@ -44,10 +49,10 @@ vector<double> Network::process(vector<double>& input) {
 		}
 	}
 
-	vector<double> ans;
+	vector<double> ans(output.size());
 	//values are calculated via connections and nodes signalling
 	for (int i = 0; i < output.size(); i++) {
-		ans[i] = output[i]->value;
+		ans.push_back(output[i]->value);
 	}
 
 	return ans;
@@ -118,10 +123,13 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 			strikes--;
 		}
 		else {
+			bestWeight.clear();
 			for (int i = 0; i < nodeList.size(); i++) {
+				vector<double> one;
 				for (int a = 0; a < nodeList[i].send.size(); a++) {
-					bestWeight[i][a] = nodeList[i].send[a].weight;
+					one.push_back(nodeList[i].send[a].weight);
 				}
+				bestWeight.push_back(one);
 			}
 			strikes = 10;
 		}
@@ -211,7 +219,7 @@ Node& Network::getNode(int i)
 Node& Network::createNode(int send)
 {
 	int a = nodeList.size();
-	nodeList.push_back(Node(a, send));
+	nodeList.push_back(Node(a, 100));
 	return nodeList.back();
 }
 
@@ -253,9 +261,9 @@ int Network::mutateNode(int from, int to, int innovationA, int innovationB)
 bool Network::checkCircleMaster(Node& n, int goal)
 {
 	const int s = nodeList.size();
-	int* preCheck = new int[s];
+	int* preCheck = new int[nodeList.size()];
 
-	for (int i = 0; i < sizeof(preCheck) / sizeof(preCheck[0]); i++) {
+	for (int i = 0; i < nodeList.size(); i++) {
 		preCheck[i] = i;
 	}
 

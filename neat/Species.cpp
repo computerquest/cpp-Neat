@@ -158,13 +158,8 @@ void Species::updateStereotype()
 {
 	int numNodes = 0;
 
-	for (int i = 0; i < connectionInnovation.size(); i++) {
-		connectionInnovation[i] = 0;
-	}
-
-	for (int i = 0; i < commonInnovation.size(); i++) {
-		removeCI(commonInnovation[i]);
-	}
+	connectionInnovation.clear();
+	commonInnovation.clear();
 
 	for (int i = 0; i < network.size(); i++) {
 		numNodes += network[i]->nodeList.size();
@@ -312,10 +307,10 @@ void Species::mateSpecies()
 	adjustFitness();
 
 	//sorts by adjusted fitness
-	vector<Network*> sortedNetwork;
+	vector<Network*> sortedNetwork(network.size() * 85 / 100);
 	double lastValue = 1000.0;
 	double sumFitness = 0.0;
-	for (int i = 0; i < network.size() * 85 / 100; i++) {
+	for (int i = 0; i < sortedNetwork.capacity(); i++) {
 		double localMax = 0.0;
 		int localIndex = 0;
 		for (int a = 0; a < network.size(); a++) {
@@ -339,19 +334,19 @@ void Species::mateSpecies()
 			}
 		}
 
-		sortedNetwork[i] = &getNetworkAt(localIndex);
+		sortedNetwork.push_back(&getNetworkAt(localIndex));
 		sumFitness += sortedNetwork[i]->adjustedFitness;
 		lastValue = sortedNetwork[i]->adjustedFitness;
 	}
 
-	vector<Network> newNets;
+	vector<Network> newNets(network.size());
 	int count = 0;
 	//mates networks
 	for (int i = 0; i < sortedNetwork.size(); i++) {
 		int numKids = int(sortedNetwork[i]->adjustedFitness / sumFitness * newNets.size());
 		int numMade = numKids;
 		for (int a = 1; count < newNets.size() && a + i < sortedNetwork.size(); a++) {
-			newNets[count] = mateNetwork(sortedNetwork[i]->innovation, sortedNetwork[i + a]->innovation, sortedNetwork[i]->nodeList.size(), sortedNetwork[i + a]->nodeList.size());
+			newNets.push_back(mateNetwork(sortedNetwork[i]->innovation, sortedNetwork[i + a]->innovation, sortedNetwork[i]->nodeList.size(), sortedNetwork[i + a]->nodeList.size()));
 			count++;
 			numMade--;
 		}
@@ -359,7 +354,7 @@ void Species::mateSpecies()
 
 	//mutates for remainder of spots available
 	for (int i = 0; count < newNets.size(); i++) {
-		newNets[count] = clone(sortedNetwork[i]);
+		newNets.push_back(clone(sortedNetwork[i]));
 		mutateNetwork(newNets[count]);
 		count++;
 
