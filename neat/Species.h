@@ -14,7 +14,6 @@ public:
 	double mutate;
 
 	Species(int id, vector<Network*> networks, double mutate);
-	Species(int id, vector<Network>& networks, double mutate);
 
 	void addCI(int a);
 	void removeCI(int a);

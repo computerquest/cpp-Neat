@@ -27,6 +27,7 @@ public:
 	//int* getInnovation(int num);
 	//int findInnovation(int search[2]);
 	Species& getSpecies(int id);
-	Species& createSpecies(vector<Network>& possible);
+	Species& createSpecies(vector<Network*> possible);
+	Species& createSpecies(int startIndex, int endIndex);
 	void removeSpecies(int id);
 };

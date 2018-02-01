@@ -219,7 +219,7 @@ Node& Network::getNode(int i)
 Node& Network::createNode(int send)
 {
 	int a = nodeList.size();
-	nodeList.push_back(Node(a, 100));
+	nodeList.push_back(Node(a, send));
 	return nodeList.back();
 }
 

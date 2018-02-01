@@ -16,18 +16,6 @@ Species::Species(int id, vector<Network*> networks, double mutate)
 	updateStereotype();
 }
 
-Species::Species(int id, vector<Network>& networks, double mutate)
-{
-	this->id = id;
-	this->mutate = mutate;
-	
-	for (int i = 0; i < networks.size(); i++) {
-		this->network.push_back(&networks[i]);
-	}
-
-	updateStereotype();
-}
-
 void Species::addCI(int a)
 {
 	for (int i = 0; i < commonInnovation.size(); i++) {
@@ -50,6 +38,12 @@ void Species::removeCI(int a)
 
 int& Species::getInovOcc(int i)
 {
+	if (i >= connectionInnovation.size()) {
+		connectionInnovation.reserve(connectionInnovation.capacity() + i - connectionInnovation.size() + 1);
+	}
+	while (i >= connectionInnovation.size()) {
+		connectionInnovation.push_back(0);
+	}
 	return (connectionInnovation)[i];
 }
 
@@ -295,7 +289,7 @@ Network Species::mateNetwork(vector<int>& nB, vector<int>& nA, int nodeNum, int 
 }
 
 //TODO: multithread
-void Species::trainNetworks(vector<pair<vector<double>, vector<double>>>& trainingSet)
+void Species::trainNetworks(vector<pair<vector<double>,vector<double>>>& trainingSet)
 {
 	for (int i = 0; i < network.size(); i++) {
 		network[i]->trainset(trainingSet, 10000); //I have capped the number of interations intentionaly to control training time

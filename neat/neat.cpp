@@ -178,7 +178,9 @@ void Neat::speciate(Network& network)
 		}
 
 		int lastSpec = network.species;
-		Species& newSpec = createSpecies(vector<Network>(this->network.begin() + networkIndex, this->network.begin() + networkIndex + 1));
+		vector<Network*> pass;
+		pass.push_back(&this->network[networkIndex]);
+		Species& newSpec = createSpecies(pass);
 
 		//remove from the old species
 		Species& s = getSpecies(lastSpec);
@@ -258,10 +260,27 @@ Species& Neat::getSpecies(int id)
 	//TODO: need default return
 }
 
-Species& Neat::createSpecies(vector<Network>& possible)
+Species& Neat::createSpecies(vector<Network*> possible)
 {
 	for (int i = 0; i < possible.size(); i++) {
-		possible[i].species = speciesId;
+		possible[i]->species = speciesId;
+	}
+
+	species.push_back(Species(speciesId, possible, nodeMutate));
+
+	speciesId++;
+
+	return species.back();
+}
+
+Species & Neat::createSpecies(int startIndex, int endIndex)
+{
+	vector<Network*> possible;
+	for (int i = startIndex; i < endIndex; i++) {
+		possible.push_back(&network[i]);
+	}
+	for (int i = 0; i < possible.size(); i++) {
+		possible[i]->species = speciesId;
 	}
 
 	species.push_back(Species(speciesId, possible, nodeMutate));
