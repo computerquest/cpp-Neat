@@ -23,10 +23,10 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 		network.push_back(Network(input, output, i, 0, lr, true));
 	}
 
-	createSpecies(vector<Network>(network.begin() + 0, network.begin() + network.size() % 5 + network.size() / 5));
+	createSpecies(0, network.size() % 5 + network.size() / 5);
 	species[0].innovationDict = &connectionInnovation;
 	for (int i = network.size() % 5 + (network.size() / 5); i + (network.size() / 5) <= network.size(); i += (network.size() / 5)) {
-		createSpecies(vector<Network>(network.begin() + i, network.begin() + i + (network.size() / 5)));
+		createSpecies(i,i + (network.size() / 5));
 	}
 
 	for (int i = 0; i < species.size(); i++) {
@@ -98,6 +98,8 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 			}
 		}
 
+		printNeat();
+
 		cout << "epoch:" << z << bestFit << endl;
 	}
 
@@ -125,7 +127,7 @@ void Neat::speciateAll()
 void Neat::checkSpecies()
 {
 	for (int i = 0; i < species.size(); i++) {
-		vector<double> values(species.size());
+		vector<double> values;
 		for (int a = 0; a < species.size(); a++) {
 			if (a == i) {
 				values.push_back(100.0);
@@ -151,7 +153,7 @@ void Neat::checkSpecies()
 
 void Neat::speciate(Network& network)
 {
-	vector<double> values(species.size());
+	vector<double> values;
 
 	for (int i = 0; i < species.size(); i++) {
 		values.push_back(compareGenome(network.nodeList.size(), network.innovation, species[i].avgNode(), species[i].commonInnovation));
@@ -206,11 +208,11 @@ void Neat::speciate(Network& network)
 		}
 	}
 	else if (network.species != bestSpec) {
-		Species& lastSpec = getSpecies(network.species);
+		Species* lastSpec = &getSpecies(network.species);
 		getSpecies(bestSpec).addNetwork(network);
 
-		if (lastSpec.network.size() != 0) {
-			lastSpec.removeNetwork(network.networkId);
+		if (!lastSpec) {
+			lastSpec->removeNetwork(network.networkId);
 		}
 	}
 }
@@ -239,6 +241,16 @@ double Neat::compareGenome(int node, vector<int>& innovation, int nodeA, vector<
 	return missing + abs(node - nodeA) / (smaller->size() + ((node + nodeA) / 2));
 }
 
+void Neat::printNeat() {
+	cout << endl;
+	for (int i = 0; i < species.size(); i++) {
+		cout << "Spec Id: " << species[i].id << " network size: " << species[i].network.size() << endl;
+		for (int a = 0; a < species[i].network.size(); a++) {
+			species[i].network[a]->printNetwork();
+		}
+	}
+	cout << endl;
+}
 /*int * Neat::getInnovation(int num)
 {
 	return nullptr;
@@ -260,7 +272,7 @@ Species& Neat::getSpecies(int id)
 	//TODO: need default return
 }
 
-Species& Neat::createSpecies(vector<Network*> possible)
+Species& Neat::createSpecies(vector<Network*>& possible)
 {
 	for (int i = 0; i < possible.size(); i++) {
 		possible[i]->species = speciesId;
@@ -277,10 +289,8 @@ Species & Neat::createSpecies(int startIndex, int endIndex)
 {
 	vector<Network*> possible;
 	for (int i = startIndex; i < endIndex; i++) {
+		network[i].species = speciesId;
 		possible.push_back(&network[i]);
-	}
-	for (int i = 0; i < possible.size(); i++) {
-		possible[i]->species = speciesId;
 	}
 
 	species.push_back(Species(speciesId, possible, nodeMutate));

@@ -64,7 +64,7 @@ int& Species::reduceInov(int i)
 	int& ans = getInovOcc(i);
 	(ans)--;
 
-	if (double((ans) / network.size()) < .5) {
+	if (ans == 0 || double((ans) / network.size()) < .5) {
 		removeCI(i);
 	}
 
@@ -122,7 +122,7 @@ void Species::removeNetwork(int id)
 				reduceInov(inn[a]);
 			}
 
-			checkCI();
+			//checkCI();
 		}
 	}
 }
@@ -301,7 +301,8 @@ void Species::mateSpecies()
 	adjustFitness();
 
 	//sorts by adjusted fitness
-	vector<Network*> sortedNetwork(network.size() * 85 / 100);
+	vector<Network*> sortedNetwork;
+	sortedNetwork.reserve((network.size() * 85 / 100));
 	double lastValue = 1000.0;
 	double sumFitness = 0.0;
 	for (int i = 0; i < sortedNetwork.capacity(); i++) {
@@ -333,7 +334,8 @@ void Species::mateSpecies()
 		lastValue = sortedNetwork[i]->adjustedFitness;
 	}
 
-	vector<Network> newNets(network.size());
+	vector<Network> newNets;
+	newNets.reserve(network.size());
 	int count = 0;
 	//mates networks
 	for (int i = 0; i < sortedNetwork.size(); i++) {

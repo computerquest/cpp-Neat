@@ -2,6 +2,7 @@
 #include "Network.h"
 #include "Connection.h"
 #include "Node.h"
+#include <iostream>
 using namespace std;
 
 Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon)
@@ -36,11 +37,23 @@ Network::Network()
 
 void Network::printNetwork()
 {
+	cout << endl;
+	cout << networkId << " " << species << endl;
+
+	for (int i = 0; i < nodeList.size(); i++) {
+		Node& n = nodeList[i];
+		cout << "	" << n.id << " ";
+		for (int a = 0; a < n.send.size(); a++) {
+			cout << "		" << n.send[a].nodeTo->id << " ";
+		}
+		cout << endl;
+	}
+	cout << endl;
 }
 
 vector<double> Network::process(vector<double>& input) {
 	//set input values
-	for (int i = 0; i < sizeof(input) / sizeof(input[0]); i++) {
+	for (int i = 0; i < input.size(); i++) {
 		if (i < this->input.size()) {
 			this->input[i]->setValue(input[i]);
 		}
@@ -49,7 +62,7 @@ vector<double> Network::process(vector<double>& input) {
 		}
 	}
 
-	vector<double> ans(output.size());
+	vector<double> ans;
 	//values are calculated via connections and nodes signalling
 	for (int i = 0; i < output.size(); i++) {
 		ans.push_back(output[i]->value);
