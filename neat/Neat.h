@@ -21,7 +21,7 @@ public:
 	
 	void speciateAll();
 	void checkSpecies();
-	void speciate(Network& n);
+	void speciate(Network& n, Species* s);
 	double compareGenome(int node, vector<int>& innovation, int nodeA, vector<int>& innovationA);
 
 	//int* getInnovation(int num);

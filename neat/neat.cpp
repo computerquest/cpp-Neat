@@ -34,6 +34,7 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 			species[i].mutateNetwork(*species[i].network[a]);
 		}
 	}
+
 	speciateAll();
 	checkSpecies();
 }
@@ -43,7 +44,7 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 {
 	int strikes = cutoff;
 	Network* bestNet = nullptr;
-	double bestFit = 0.0;
+	double bestFit = 0;
 	//var wg sync.WaitGroup
 
 	//initial training
@@ -55,6 +56,7 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 	//wg.Wait()
 
 	for (int z = 0; strikes > 0 && bestFit < target; z++) {
+		cout << "//////////////////////////////////////////////////////////////" << endl;
 		//mates
 		for (int i = 0; i < species.size(); i++) {
 			//wg.Add(1)
@@ -98,9 +100,9 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 			}
 		}
 
-		printNeat();
-
-		cout << "epoch:" << z << bestFit << endl;
+		//printNeat();
+		bestNet->printNetwork();
+		cout << "epoch:" << z << " best: " << bestFit << endl;
 	}
 
 	return *bestNet;
@@ -109,9 +111,9 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 void Neat::mutatePopulation()
 {
 	srand(time(NULL));
-	int numNet = (rand() % network.size() - 3) / 5 + 3;
+	int numNet = rand() % ((network.size() - 3) / 5) + 3;
 	for (int i = 0; i < numNet; i++) {
-		int species = int(rand() % (this->species.size() - 1));
+		int species = int(rand() % (this->species.size()));
 
 		this->species[species].mutateNetwork(this->species[species].getNetworkAt(rand() % this->species[species].network.size()));
 	}
@@ -119,8 +121,10 @@ void Neat::mutatePopulation()
 
 void Neat::speciateAll()
 {
-	for (int i = 0; i < network.size(); i++) {
-		speciate(network[i]);
+	for (int a = 0; a < species.size(); a++) {
+		for (int i = 0; i < species[a].network.size(); i++) {
+			speciate(*species[a].network[i], &species[a]);
+		}
 	}
 }
 
@@ -151,7 +155,7 @@ void Neat::checkSpecies()
 	}
 }
 
-void Neat::speciate(Network& network)
+void Neat::speciate(Network& network, Species* s)
 {
 	vector<double> values;
 
@@ -184,35 +188,36 @@ void Neat::speciate(Network& network)
 		pass.push_back(&this->network[networkIndex]);
 		Species& newSpec = createSpecies(pass);
 
-		//remove from the old species
-		Species& s = getSpecies(lastSpec);
-		//removes current and checks to see if the rest need to be speciated
-		s.removeNetwork(network.networkId);
-		for (int i = 0; i < s.network.size(); i++) {
-			if (s.network[i]->networkId != network.networkId && s.network[i]->species == s.id) {
-				if (compareGenome(s.network[i]->nodeList.size(), s.network[i]->innovation, s.avgNode(), s.commonInnovation) > compareGenome(s.network[i]->nodeList.size(), s.network[i]->innovation, newSpec.avgNode(), newSpec.commonInnovation)) {
-					newSpec.addNetwork(*s.network[i]);
-					s.removeNetwork(s.network[i]->networkId);
-					i--;
+		//TODO: there will be a problem when og species can't be found
+
+		if (s != nullptr) {
+			//removes current and checks to see if the rest need to be speciated
+			s->removeNetwork(network.networkId);
+			for (int i = 0; i < s->network.size(); i++) {
+				if (s->network[i]->networkId != network.networkId) { // && s->network[i]->species == s->id) {
+					//	compareGenome(len(s.network[i].nodeList), s.network[i].innovation, s.avgNode(), s.commonInnovation) > compareGenome(len(s.network[i].nodeList), s.network[i].innovation, newSpec.avgNode(), newSpec.commonInnovation) {
+					if (compareGenome(s->network[i]->nodeList.size(), s->network[i]->innovation, s->avgNode(), s->commonInnovation) > compareGenome(s->network[i]->nodeList.size(), s->network[i]->innovation, newSpec.avgNode(), newSpec.commonInnovation)) {
+						newSpec.addNetwork(*s->network[i]);
+						s->removeNetwork(s->network[i]->networkId);
+						i--;
+					}
 				}
 			}
 		}
-
 		//checks to see if new species meets size requirement
 		if (newSpec.network.size() < 2) {
 			//reassign creator to next best in order to prevent a loop
-			newSpec.removeNetwork(network.networkId);
+			//newSpec.removeNetwork(network.networkId);
 			getSpecies(bestSpec).addNetwork(network); //could be problem because index changes when make new species (maybe because should be added to the end)
 
 			removeSpecies(newSpec.id);
 		}
 	}
 	else if (network.species != bestSpec) {
-		Species* lastSpec = &getSpecies(network.species);
 		getSpecies(bestSpec).addNetwork(network);
 
-		if (!lastSpec) {
-			lastSpec->removeNetwork(network.networkId);
+		if (s != nullptr) {
+			s->removeNetwork(network.networkId);
 		}
 	}
 }
@@ -268,7 +273,6 @@ Species& Neat::getSpecies(int id)
 			return species[i];
 		}
 	}
-
 	//TODO: need default return
 }
 
@@ -304,12 +308,12 @@ void Neat::removeSpecies(int id)
 {
 	for (int i = 0; i < species.size(); i++) {
 		if (species[i].id == id) {
-			vector<Network*>& currentSpecies = species[i].network;
+			vector<Network*> currentSpecies = species[i].network;
 
 			species.erase(species.begin() + i);
 			for (int a = 0; a < currentSpecies.size(); a++) {
 				if (currentSpecies[a]->species == id) {
-					speciate(*currentSpecies[a]);
+					speciate(*currentSpecies[a], nullptr);
 				}
 			}
 		}

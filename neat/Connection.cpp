@@ -12,6 +12,7 @@ Connection::Connection(Node * fromNode, Node * toNode, int inNumber)
 	nodeFrom = fromNode;
 	nodeTo = toNode;
 	innovation = inNumber;
+	nextWeight = 0;
 
 	randWeight();
 }
@@ -19,7 +20,7 @@ Connection::Connection(Node * fromNode, Node * toNode, int inNumber)
 void Connection::randWeight()
 {
 	srand(unsigned(time(NULL)));
-	weight = rand()*.2 + .4;
+	weight = ((rand()%10)/10)*.2 + .4;
 }
 
 void Connection::notifyValue()

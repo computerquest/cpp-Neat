@@ -138,8 +138,8 @@ Network& Species::getNetwork(int id)
 
 void Species::addNetwork(Network& n)
 {
+	n.species = id;
 	network.push_back(&n);
-	int species = id;
 
 	for (int i = 0; i < n.innovation.size(); i++) {
 		incrementInov(n.innovation[i]);
@@ -165,7 +165,7 @@ void Species::updateStereotype()
 
 void Species::mutateNetwork(Network& network)
 {
-	srand((unsigned)time(0));
+	srand(time(NULL));
 	int nodeRange = network.nodeList.size();
 
 	//finds or adds innovation numbers and returns the innovation
@@ -211,8 +211,9 @@ void Species::mutateNetwork(Network& network)
 		network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode));
 	};
 
+	int test = rand() % 100;
 	//randomly picks if node or connection mutate
-	if (rand() <= mutate) {
+	if (test <= mutate*100) {
 		nodeMutate();
 	}
 	else {
@@ -224,8 +225,10 @@ void Species::mutateNetwork(Network& network)
 							   //find 2 unconnected nodes
 							   //for ans && attempts <= 10 {
 		while (attempts <= 10) {
-			firstNode = rand()%nodeRange;
-			secondNode = rand()%nodeRange;
+			int t = rand();
+			int a = rand();
+			firstNode = t%nodeRange;
+			secondNode = a%nodeRange;
 
 			if (firstNode == secondNode || isOutput(network.getNode(firstNode)) || isInput(network.getNode(secondNode))) {
 				continue;

@@ -6,6 +6,9 @@ Node::Node(int id, int send)
 {
 	this->id = id; 
 	this->send.reserve(send);
+	inputRecieved = 0;
+	influenceRecieved = 0;
+	value = 0;
 }
 
 void Node::recieveValue()
@@ -89,7 +92,7 @@ void Node::setInfluence(double a)
 
 bool isInput(Node & n)
 {
-	if (n.recieve.size() > 0) {
+	if (n.recieve.capacity() > 0) {
 		return false;
 	}
 	return true;
@@ -97,7 +100,7 @@ bool isInput(Node & n)
 
 bool isOutput(Node & n)
 {
-	if (n.send.size() > 0) {
+	if (n.send.capacity() > 0) {
 		return false;
 	}
 	return true;

@@ -38,13 +38,17 @@ Network::Network()
 void Network::printNetwork()
 {
 	cout << endl;
-	cout << networkId << " " << species << endl;
+	cout << "Network id: " << networkId << " Species: " << species << endl;
 
 	for (int i = 0; i < nodeList.size(); i++) {
 		Node& n = nodeList[i];
-		cout << "	" << n.id << " ";
+		cout << "	Node: " << n.id << " Sending: ";
 		for (int a = 0; a < n.send.size(); a++) {
-			cout << "		" << n.send[a].nodeTo->id << " ";
+			cout << n.send[a].nodeTo->id << " ";
+		}
+		cout << "recieving: ";
+		for (int a = 0; a < n.recieve.size(); a++) {
+			cout << n.recieve[a]->nodeFrom->id << " ";
 		}
 		cout << endl;
 	}
@@ -139,6 +143,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 			bestWeight.clear();
 			for (int i = 0; i < nodeList.size(); i++) {
 				vector<double> one;
+				one.reserve(nodeList[i].send.size());
 				for (int a = 0; a < nodeList[i].send.size(); a++) {
 					one.push_back(nodeList[i].send[a].weight);
 				}
@@ -146,6 +151,8 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 			}
 			strikes = 10;
 		}
+
+		//cout << "Error: " << currentError << " change " << errorChange << endl;
 	}
 
 	//sets the weights back to the best
@@ -324,14 +331,14 @@ Network clone(Network* n)
 		ans.createNode(100);
 	}
 
-	 for (int i = 0; i < n->nodeList.size(); i++) {
-		 for (int a = 0; a < n->nodeList[i].send.size(); a++) {
-			 ans.mutateConnection(n->nodeList[i].send[a].nodeFrom->id, n->nodeList[i].send[a].nodeTo->id, n->nodeList[i].send[a].innovation);
-			 ans.nodeList[i].send[a].weight = n->nodeList[i].send[a].weight;
-		 }
-	 }
+	for (int i = 0; i < n->nodeList.size(); i++) {
+		for (int a = 0; a < n->nodeList[i].send.size(); a++) {
+			ans.mutateConnection(n->nodeList[i].send[a].nodeFrom->id, n->nodeList[i].send[a].nodeTo->id, n->nodeList[i].send[a].innovation);
+			ans.nodeList[i].send[a].weight = n->nodeList[i].send[a].weight;
+		}
+	}
 
-	 ans.fitness = n->fitness;
+	ans.fitness = n->fitness;
 
-	 return ans;
+	return ans;
 }
