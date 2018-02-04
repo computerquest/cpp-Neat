@@ -352,7 +352,7 @@ void Species::mateSpecies()
 	}
 
 	//mutates for remainder of spots available
-	for (int i = 0; count < newNets.size(); i++) {
+	for (int i = 0; count < newNets.capacity(); i++) {
 		newNets.push_back(clone(sortedNetwork[i]));
 		mutateNetwork(newNets[count]);
 		count++;

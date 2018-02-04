@@ -63,6 +63,7 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 			species[i].mateSpecies();//&wg);
 		}
 
+		printNeat();
 		//wg.Wait()
 
 			//trains
