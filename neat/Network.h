@@ -39,4 +39,4 @@ public:
 	bool checkCircle(Node& n, int goal, int preCheck[]);
 };
 
-Network clone(Network* n);
+void clone(Network* n, Network& ans);

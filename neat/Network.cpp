@@ -322,10 +322,10 @@ bool Network::checkCircle(Node& n, int goal, int preCheck[])
 	return ans;
 }
 
-Network clone(Network* n)
+void clone(Network* n, Network& ans)
 {
 	//need to totally reconstruct because otherwise the pointers in connections and such would be screwed up
-	Network ans(n->input.size() - 1, n->output.size(), n->networkId, n->species, n->learningRate, false);
+	ans = Network(n->input.size() - 1, n->output.size(), n->networkId, n->species, n->learningRate, false);
 
 	for (int i = 0; i < n->nodeList.size() - n->input.size() - n->output.size(); i++) {
 		ans.createNode(100);
@@ -339,6 +339,4 @@ Network clone(Network* n)
 	}
 
 	ans.fitness = n->fitness;
-
-	return ans;
 }

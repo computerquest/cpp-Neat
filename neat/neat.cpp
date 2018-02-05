@@ -6,13 +6,15 @@
 #include <iostream>
 #include <vector>       // std::vector
 #include <utility>
+#include <array>
 using namespace std;
 
 Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : nodeMutate(mutate)
 {
+	speciesThreshold = .01;
 	for (int i = output; i < input + output; i++) {
 		for (int a = 0; a < output; a++) {
-			int c[] = { i,a };
+			pair<int, int> c = { i,a };
 			connectionInnovation.push_back(c);
 		}
 	}
@@ -43,7 +45,8 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cutoff, double target)
 {
 	int strikes = cutoff;
-	Network* bestNet = nullptr;
+	Network bestNet;
+	cout << connectionInnovation[0].first << " " << connectionInnovation[0].second << endl;
 	double bestFit = 0;
 	//var wg sync.WaitGroup
 
@@ -67,9 +70,11 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 		//wg.Wait()
 
 			//trains
-		for (int i = 0; i < species.size(); i++) {
-			//wg.Add(1)
-			species[i].trainNetworks(input);
+		{
+			for (int i = 0; i < species.size(); i++) {
+				//wg.Add(1)
+				species[i].trainNetworks(input);
+			}
 		}
 		//wg.Wait()
 
@@ -89,7 +94,7 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 
 		//compares the best
 		if (bestIndex != -1) {
-			bestNet = &clone(&network[bestIndex]);
+			clone(&network[bestIndex], bestNet);
 			strikes = cutoff;
 		}
 		else {
@@ -102,11 +107,13 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 		}
 
 		//printNeat();
-		bestNet->printNetwork();
+		cout << "best" << endl;
+		bestNet.printNetwork();
 		cout << "epoch:" << z << " best: " << bestFit << endl;
+		cout << endl;
 	}
 
-	return *bestNet;
+	return bestNet;
 }
 
 void Neat::mutatePopulation()

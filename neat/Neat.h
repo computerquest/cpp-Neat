@@ -8,14 +8,14 @@ class Neat {
 public:
 	double nodeMutate;
 	vector<Network> network;
-	vector<int*> connectionInnovation;
+	vector<pair<int, int>> connectionInnovation;
 	double speciesThreshold;
 	vector<Species> species;
 	int speciesId;
 
 	Neat(int numNetworks, int input, int output, double mutate, double lr);
 
-	Network start(vector<pair<vector<double>,vector<double>>>& input, int cutoff, double target);
+	Network start(vector<pair<vector<double>,vector<double>>>& input, int cutoff, double target); //returning network will not work
 	void printNeat();
 	void mutatePopulation();
 	

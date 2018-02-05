@@ -52,7 +52,7 @@ int main()
 	}
 
 	  Network winner(0,0,0,0,0.0, false);
-	  Neat neat = Neat(10, 2, 1, .3, .01);
+	  Neat neat = Neat(15, 2, 1, .3, .01);
 
 	  winner = neat.start(data, 100, 100000);
 	  //neat.printNeat()

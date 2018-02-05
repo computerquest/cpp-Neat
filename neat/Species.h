@@ -5,7 +5,7 @@ using namespace std;
 
 class Species {
 public:
-	static vector<int*>* innovationDict;
+	static vector<pair<int, int>>* innovationDict;
 	
 	vector<Network*> network;
 	vector<int> connectionInnovation;
@@ -21,8 +21,8 @@ public:
 	int& incrementInov(int i);
 	int& reduceInov(int i);
 	void checkCI();
-	int* getInnovationRef(int num);
-	int createNewInnovation(int values[2]);
+	pair<int, int> getInnovationRef(int num);
+	int createNewInnovation(int a, int b);
 	void sortInnovation();
 
 	Network& getNetworkAt(int a);
@@ -32,7 +32,7 @@ public:
 
 	void updateStereotype();
 	void mutateNetwork(Network& network);
-	Network mateNetwork(vector<int>& nB, vector<int>& nA, int nodeNum, int nodeNumA);
+	void mateNetwork(vector<int>& nB, vector<int>& nA, int nodeNum, int nodeNumA, Network& ans);
 	void trainNetworks(vector<pair<vector<double>, vector<double>>>& trainingSet);
 	void mateSpecies();
 	void adjustFitness();
