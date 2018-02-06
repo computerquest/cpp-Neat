@@ -3,6 +3,7 @@
 #include <algorithm>
 #include<ctime> //for time function
 #include<cstdlib>// for srand function.
+#include "Activation.h"
 using namespace std;
 
 vector<pair<int, int>>* Species::innovationDict;
@@ -165,7 +166,6 @@ void Species::updateStereotype()
 
 void Species::mutateNetwork(Network& network)
 {
-	srand(time(NULL));
 	int nodeRange = network.nodeList.size();
 
 	//finds or adds innovation numbers and returns the innovation
@@ -197,7 +197,7 @@ void Species::mutateNetwork(Network& network)
 
 		//picks a node
 		while (!ans) {
-			firstNode = int(rand()%nodeRange);
+			firstNode = random(0, nodeRange - 1); // int(rand() % nodeRange);
 
 			if (network.getNode(firstNode).send.size() > 0) {
 				ans = true;
@@ -205,14 +205,13 @@ void Species::mutateNetwork(Network& network)
 		}
 
 		//picks a random connection from firstNode and gets the id
-		secondNode = network.getNode(firstNode).send[int(rand()%network.getNode(firstNode).send.size())].nodeTo->id; //int(r.Int63n(int64(nodeRange)));
+		secondNode = network.getNode(firstNode).send[random(0,network.getNode(firstNode).send.size()-1)].nodeTo->id; //int(r.Int63n(int64(nodeRange)));
 
 		network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode));
 	};
 
-	int test = rand() % 100;
 	//randomly picks if node or connection mutate
-	if (test <= mutate*100) {
+	if (random(0,100) <= mutate*100) {
 		nodeMutate();
 	}
 	else {
@@ -224,11 +223,8 @@ void Species::mutateNetwork(Network& network)
 							   //find 2 unconnected nodes
 							   //for ans && attempts <= 10 {
 		while (attempts <= 10) {
-			//srand(time(NULL));
-			int t = rand();
-			int a = rand();
-			firstNode = t%nodeRange;
-			secondNode = a%nodeRange;
+			firstNode = random(0, nodeRange-1);
+			secondNode = random(0,nodeRange-1);
 
 			if (firstNode == secondNode || isOutput(network.getNode(firstNode)) || isInput(network.getNode(secondNode))) {
 				continue;

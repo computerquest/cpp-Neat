@@ -7,6 +7,7 @@
 #include <vector>       // std::vector
 #include <utility>
 #include <array>
+#include "Activation.h"
 using namespace std;
 
 Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : nodeMutate(mutate)
@@ -36,9 +37,6 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 			species[i].mutateNetwork(*species[i].network[a]);
 		}
 	}
-
-	mutatePopulation();
-	mutatePopulation();
 
 	speciateAll();
 	checkSpecies();
@@ -123,13 +121,11 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 
 void Neat::mutatePopulation()
 {
-	srand(time(NULL));
-	int numNet = rand() % ((network.size() - 3) / 5) + 3;
+	int numNet = random(3, network.size() / 5); // rand() % ((network.size() - 3) / 5) + 3;
 	for (int i = 0; i < numNet; i++) {
-		srand(time(NULL));
-		int species = int(rand() % (this->species.size()));
+		int species = random(0, this->species.size() - 1); // int(rand() % (this->species.size()));
 
-		this->species[species].mutateNetwork(this->species[species].getNetworkAt(rand() % this->species[species].network.size()));
+		this->species[species].mutateNetwork(this->species[species].getNetworkAt(random(0, this->species[species].network.size() - 1)));//rand() % this->species[species].network.size()));
 	}
 }
 

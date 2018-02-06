@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include <iostream>
 #include "Neat.h"
+#include "Activation.h"
 using namespace std;
 
 int main()
@@ -51,6 +52,10 @@ int main()
 		data.push_back(p);
 	}
 
+	randInit();
+	for (int i = 0; i < 50; i++) {
+		cout << random(0, 3) << endl;
+	}
 	  Network winner(0,0,0,0,0.0, false);
 	  Neat neat = Neat(20, 2, 1, .3, .01);
 
