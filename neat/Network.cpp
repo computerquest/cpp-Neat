@@ -38,7 +38,11 @@ Network::Network()
 void Network::printNetwork()
 {
 	cout << endl;
-	cout << "Network id: " << networkId << " Species: " << species << endl;
+	cout << "Network id: " << networkId << " Species: " << species << " ";
+	for (int i = 0; i < innovation.size(); i++) {
+		cout << innovation[i] << " ";
+	}
+	cout << endl;
 
 	for (int i = 0; i < nodeList.size(); i++) {
 		Node& n = nodeList[i];

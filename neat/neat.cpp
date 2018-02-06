@@ -37,6 +37,9 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 		}
 	}
 
+	mutatePopulation();
+	mutatePopulation();
+
 	speciateAll();
 	checkSpecies();
 }
@@ -46,7 +49,7 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 {
 	int strikes = cutoff;
 	Network bestNet;
-	cout << connectionInnovation[0].first << " " << connectionInnovation[0].second << endl;
+	cout << isInput(network[0].getNode(3))<< " " << isOutput(network[0].getNode(3)) << endl;
 	double bestFit = 0;
 	//var wg sync.WaitGroup
 
@@ -60,6 +63,8 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 
 	for (int z = 0; strikes > 0 && bestFit < target; z++) {
 		cout << "//////////////////////////////////////////////////////////////" << endl;
+		printNeat();
+		cout << "/////////////////////" << endl;
 		//mates
 		for (int i = 0; i < species.size(); i++) {
 			//wg.Add(1)
@@ -121,6 +126,7 @@ void Neat::mutatePopulation()
 	srand(time(NULL));
 	int numNet = rand() % ((network.size() - 3) / 5) + 3;
 	for (int i = 0; i < numNet; i++) {
+		srand(time(NULL));
 		int species = int(rand() % (this->species.size()));
 
 		this->species[species].mutateNetwork(this->species[species].getNetworkAt(rand() % this->species[species].network.size()));

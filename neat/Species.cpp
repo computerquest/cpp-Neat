@@ -224,7 +224,7 @@ void Species::mutateNetwork(Network& network)
 							   //find 2 unconnected nodes
 							   //for ans && attempts <= 10 {
 		while (attempts <= 10) {
-			srand(time(NULL));
+			//srand(time(NULL));
 			int t = rand();
 			int a = rand();
 			firstNode = t%nodeRange;
@@ -238,6 +238,8 @@ void Species::mutateNetwork(Network& network)
 				attempts++;
 				continue;
 			}
+
+			break;
 		}
 
 		//muateNode if attempts exceeded else add the connection
