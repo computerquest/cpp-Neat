@@ -28,6 +28,7 @@ public:
 	void removeInnovation(int num);
 
 	void mutateConnection(int from, int to, int innovation);
+	void mutateConnection(int from, int to, int innovation, double weight);
 	int numConnection();
 	void resetWeight();
 
@@ -39,4 +40,4 @@ public:
 	bool checkCircle(Node& n, int goal, int preCheck[]);
 };
 
-void clone(Network* n, Network& ans);
+void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict);

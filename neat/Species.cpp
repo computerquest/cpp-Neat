@@ -4,6 +4,7 @@
 #include<ctime> //for time function
 #include<cstdlib>// for srand function.
 #include "Activation.h"
+#include <iostream>
 using namespace std;
 
 vector<pair<int, int>>* Species::innovationDict;
@@ -17,6 +18,7 @@ Species::Species(int id, vector<Network*> networks, double mutate)
 	updateStereotype();
 }
 
+//these CI methods are for common innovation
 void Species::addCI(int a)
 {
 	for (int i = 0; i < commonInnovation.size(); i++) {
@@ -27,7 +29,6 @@ void Species::addCI(int a)
 
 	commonInnovation.push_back(a);
 }
-
 void Species::removeCI(int a)
 {
 	for (int i = 0; i < commonInnovation.size(); i++) {
@@ -40,7 +41,7 @@ void Species::removeCI(int a)
 int& Species::getInovOcc(int i)
 {
 	if (i >= connectionInnovation.size()) {
-		connectionInnovation.reserve(connectionInnovation.capacity() + i - connectionInnovation.size() + 1);
+		connectionInnovation.reserve(connectionInnovation.capacity() + i);
 	}
 	while (i >= connectionInnovation.size()) {
 		connectionInnovation.push_back(0);
@@ -53,7 +54,7 @@ int& Species::incrementInov(int i)
 	int& ans = getInovOcc(i);
 	(ans)++;
 
-	if (double((ans) / network.size()) >= .5) {
+	if ((double)ans / network.size() >= .5) {
 		addCI(i);
 	}
 
@@ -65,7 +66,11 @@ int& Species::reduceInov(int i)
 	int& ans = getInovOcc(i);
 	(ans)--;
 
-	if (ans == 0 || double((ans) / network.size()) < .5) {
+	if (ans < 0) {
+		ans = 0;
+	}
+
+	if ((double)ans / network.size() < .5) {
 		removeCI(i);
 	}
 
@@ -74,12 +79,10 @@ int& Species::reduceInov(int i)
 
 void Species::checkCI()
 {
-	for (int i = 0; i < commonInnovation.size(); i++) {
-		removeCI(commonInnovation[i]);
-	}
+	commonInnovation.clear();
 
 	for (int i = 0; i < connectionInnovation.size(); i++) {
-		if (double(connectionInnovation[i] / network.size()) >= .5) {
+		if ((double)connectionInnovation[i] / network.size() >= .5) {
 			addCI(i);
 		}
 	}
@@ -93,7 +96,7 @@ pair<int, int> Species::getInnovationRef(int num)
 int Species::createNewInnovation(int a, int b)
 {
 	//dictControl.Lock() TODO: fix the multithread
-	pair<int, int> c = { a, b};
+	pair<int, int> c = { a, b };
 	(*innovationDict).push_back(c); //TODO: simplify
 	//defer dictControl.Unlock()
 
@@ -123,7 +126,7 @@ void Species::removeNetwork(int id)
 				reduceInov(inn[a]);
 			}
 
-			//checkCI();
+			checkCI();
 		}
 	}
 }
@@ -204,14 +207,16 @@ void Species::mutateNetwork(Network& network)
 			}
 		}
 
+		Connection& c = network.getNode(firstNode).send[random(0, network.getNode(firstNode).send.size() - 1)];
 		//picks a random connection from firstNode and gets the id
-		secondNode = network.getNode(firstNode).send[random(0,network.getNode(firstNode).send.size()-1)].nodeTo->id; //int(r.Int63n(int64(nodeRange)));
+		secondNode = c.nodeTo->id; //int(r.Int63n(int64(nodeRange)));
+		reduceInov(c.innovation);
 
 		network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode));
 	};
 
 	//randomly picks if node or connection mutate
-	if (random(0,100) <= mutate*100) {
+	if (random(0, 100) <= mutate * 100) {
 		nodeMutate();
 	}
 	else {
@@ -223,8 +228,8 @@ void Species::mutateNetwork(Network& network)
 							   //find 2 unconnected nodes
 							   //for ans && attempts <= 10 {
 		while (attempts <= 10) {
-			firstNode = random(0, nodeRange-1);
-			secondNode = random(0,nodeRange-1);
+			firstNode = random(0, nodeRange - 1);
+			secondNode = random(0, nodeRange - 1);
 
 			if (firstNode == secondNode || isOutput(network.getNode(firstNode)) || isInput(network.getNode(secondNode))) {
 				continue;
@@ -248,7 +253,6 @@ void Species::mutateNetwork(Network& network)
 	}
 }
 
-//TODO: see if returning a copy screws stuff up with the references
 void Species::mateNetwork(vector<int>& nB, vector<int>& nA, int nodeNum, int nodeNumA, Network& ans)
 {
 	int in = network[0]->input.size() - 1;
@@ -288,7 +292,7 @@ void Species::mateNetwork(vector<int>& nB, vector<int>& nA, int nodeNum, int nod
 }
 
 //TODO: multithread
-void Species::trainNetworks(vector<pair<vector<double>,vector<double>>>& trainingSet)
+void Species::trainNetworks(vector<pair<vector<double>, vector<double>>>& trainingSet)
 {
 	for (int i = 0; i < network.size(); i++) {
 		network[i]->trainset(trainingSet, 10000); //I have capped the number of interations intentionaly to control training time
@@ -338,10 +342,12 @@ void Species::mateSpecies()
 	for (int i = 0; i < sortedNetwork.size(); i++) {
 		int numKids = int(sortedNetwork[i]->adjustedFitness / sumFitness * network.size());
 		int numMade = numKids;
+		vector<int> currentIn = sortedNetwork[i]->innovation;
+		int currentNL = sortedNetwork[i]->nodeList.size();
 		for (int a = 1; count < network.size() && a + i < sortedNetwork.size(); a++) {
-			int id = network[count]->networkId;
-			mateNetwork(sortedNetwork[i]->innovation, sortedNetwork[i + a]->innovation, sortedNetwork[i]->nodeList.size(), sortedNetwork[i + a]->nodeList.size(), *network[count]);
-			network[count]->networkId = id;
+			int id = sortedNetwork[i]->networkId;
+			mateNetwork(currentIn, sortedNetwork[i + a]->innovation, currentNL, sortedNetwork[i + a]->nodeList.size(), *sortedNetwork[i]);
+			sortedNetwork[i]->networkId = id;
 			count++;
 			numMade--;
 		}
@@ -350,7 +356,10 @@ void Species::mateSpecies()
 	//mutates for remainder of spots available
 	for (int i = 0; count < network.size(); i++) {
 		int id = network[count]->networkId;
-		clone(sortedNetwork[i], *network[count]);
+		cout << "clone" << endl;
+		sortedNetwork[i]->printNetwork();
+		clone(*sortedNetwork[i], *network[count], innovationDict);
+		network[count]->printNetwork();
 		mutateNetwork(*network[count]);
 		network[count]->networkId = id;
 		count++;
@@ -375,7 +384,7 @@ int Species::avgNode()
 	if (network.size() == 0) {
 		return 0;
 	}
-int sum = 0;
+	int sum = 0;
 	for (int i = 0; i < network.size(); i++) {
 		sum += network[i]->nodeList.size();
 	}

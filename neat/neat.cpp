@@ -29,7 +29,7 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 	createSpecies(0, network.size() % 5 + network.size() / 5);
 	species[0].innovationDict = &connectionInnovation;
 	for (int i = network.size() % 5 + (network.size() / 5); i + (network.size() / 5) <= network.size(); i += (network.size() / 5)) {
-		createSpecies(i,i + (network.size() / 5));
+		createSpecies(i, i + (network.size() / 5));
 	}
 
 	for (int i = 0; i < species.size(); i++) {
@@ -38,7 +38,12 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 		}
 	}
 
+	mutatePopulation();
+	mutatePopulation();
+	mutatePopulation();
+
 	speciateAll();
+	printNeat();
 	checkSpecies();
 }
 
@@ -47,7 +52,7 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 {
 	int strikes = cutoff;
 	Network bestNet;
-	cout << isInput(network[0].getNode(3))<< " " << isOutput(network[0].getNode(3)) << endl;
+	cout << isInput(network[0].getNode(3)) << " " << isOutput(network[0].getNode(3)) << endl;
 	double bestFit = 0;
 	//var wg sync.WaitGroup
 
@@ -97,7 +102,7 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 
 		//compares the best
 		if (bestIndex != -1) {
-			clone(&network[bestIndex], bestNet);
+			clone(network[bestIndex], bestNet, &connectionInnovation);
 			strikes = cutoff;
 		}
 		else {
@@ -151,7 +156,7 @@ void Neat::checkSpecies()
 			values.push_back(compareGenome(species[i].avgNode(), species[i].commonInnovation, species[a].avgNode(), species[a].commonInnovation));
 		}
 
-		int lValue = 1000.0;
+		double lValue = 1000.0;
 		for (int a = 0; a < values.size(); a++) {
 			if (values[a] < lValue) {
 				lValue = values[a];
@@ -214,6 +219,19 @@ void Neat::speciate(Network& network, Species* s)
 				}
 			}
 		}
+
+		/* THIS IS FOR CHECKING ALL NETWORKS//cannot have more than one species removed at the same time
+		for (int i = 0; i < this->network.size(); i++) {
+			Network& comp = this->network[i];
+			if (comp.networkId != network.networkId && (s != nullptr && comp.species == lastSpec)) { // && comp.species == s->id) {
+				Species& cs = getSpecies(comp.species);												 //	compareGenome(len(s.network[i].nodeList), s.network[i].innovation, s.avgNode(), s.commonInnovation) > compareGenome(len(s.network[i].nodeList), s.network[i].innovation, newSpec.avgNode(), newSpec.commonInnovation) {
+				if (compareGenome(comp.nodeList.size(), comp.innovation, cs.avgNode(), cs.commonInnovation) > compareGenome(comp.nodeList.size(), comp.innovation, newSpec.avgNode(), newSpec.commonInnovation)) {
+					newSpec.addNetwork(comp);
+					cs.removeNetwork(comp.networkId);
+					i--;
+				}
+			}
+		}*/
 		//checks to see if new species meets size requirement
 		if (newSpec.network.size() < 2) {
 			//reassign creator to next best in order to prevent a loop
@@ -247,19 +265,29 @@ double Neat::compareGenome(int node, vector<int>& innovation, int nodeA, vector<
 	}
 
 	int missing = 0;
-	for (int b = 0; b < larger->size(); b++) {
-		if (find(larger->begin(), larger->end(), (*larger)[b]) == larger->end()) {
-			missing++;
+	if (smaller->size() == 0) {
+		missing = larger->size();
+	}
+	else {
+		for (int b = 0; b < larger->size(); b++) {
+			if (find(smaller->begin(), smaller->end(), (*larger)[b]) == smaller->end()) {
+				missing++;
+			}
 		}
 	}
+	return (missing / (double)larger->size()) + (abs(node - nodeA) / (double)(node + nodeA) / 2);
 
-	return missing + abs(node - nodeA) / (smaller->size() + ((node + nodeA) / 2));
+	//return missing + abs(node - nodeA) / (smaller->size() + ((node + nodeA) / 2));
 }
 
 void Neat::printNeat() {
 	cout << endl;
 	for (int i = 0; i < species.size(); i++) {
-		cout << "Spec Id: " << species[i].id << " network size: " << species[i].network.size() << endl;
+		cout << "Spec Id: " << species[i].id << " network size: " << species[i].network.size() << " " << endl;
+		for (int a = 0; a < species[i].commonInnovation.size(); a++) {
+			cout << species[i].commonInnovation[a] << " ";
+		}
+		cout << endl;
 		for (int a = 0; a < species[i].network.size(); a++) {
 			species[i].network[a]->printNetwork();
 		}

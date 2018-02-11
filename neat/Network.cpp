@@ -29,6 +29,8 @@ Network::Network(int inputI, int outputI, int id, int species, double learningRa
 		}
 	}
 	input.push_back(&createNode(100)); //bias starts unconnected and will form connections over time
+	fitness = -5;
+	adjustedFitness = -5;
 }
 
 Network::Network()
@@ -215,6 +217,13 @@ void Network::mutateConnection(int from, int to, int innovation)
 	addInnovation(innovation);
 }
 
+void Network::mutateConnection(int from, int to, int innovation, double weight)
+{
+	Connection& c = getNode(to).addRecCon(&getNode(from).addSendCon(Connection(&getNode(from), &getNode(to), innovation)));
+	c.weight = weight;
+	addInnovation(innovation);
+}
+
 int Network::numConnection()
 {
 	double ans = 0;
@@ -326,21 +335,27 @@ bool Network::checkCircle(Node& n, int goal, int preCheck[])
 	return ans;
 }
 
-void clone(Network* n, Network& ans)
+void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
 {
-	//need to totally reconstruct because otherwise the pointers in connections and such would be screwed up
-	ans = Network(n->input.size() - 1, n->output.size(), n->networkId, n->species, n->learningRate, false);
+	int max = n.nodeList.size();
 
-	for (int i = 0; i < n->nodeList.size() - n->input.size() - n->output.size(); i++) {
-		ans.createNode(100);
-	}
-
-	for (int i = 0; i < n->nodeList.size(); i++) {
-		for (int a = 0; a < n->nodeList[i].send.size(); a++) {
-			ans.mutateConnection(n->nodeList[i].send[a].nodeFrom->id, n->nodeList[i].send[a].nodeTo->id, n->nodeList[i].send[a].innovation);
-			ans.nodeList[i].send[a].weight = n->nodeList[i].send[a].weight;
+	vector<pair<int, double>> innovation;
+	for (int i = 0; i < n.nodeList.size(); i++) {
+		for (int a = 0; a < n.nodeList[i].send.size(); a++) {
+			innovation.push_back(pair<int, double>(n.nodeList[i].send[a].innovation, n.nodeList[i].send[a].weight));
 		}
 	}
 
-	ans.fitness = n->fitness;
+	//need to totally reconstruct because otherwise the pointers in connections and such would be screwed up
+	ans = Network(n.input.size() - 1, n.output.size(), n.networkId, n.species, n.learningRate, false);
+
+	for (int i = 0; i < max - ans.input.size() - ans.output.size(); i++) {
+		ans.createNode(100);
+	}
+
+	for (int i = 0; i < innovation.size(); i++) {
+		ans.mutateConnection((*innovationDict)[innovation[i].first].first, (*innovationDict)[innovation[i].first].second, innovation[i].first, innovation[i].second);
+	}
+
+	ans.fitness = n.fitness;
 }
