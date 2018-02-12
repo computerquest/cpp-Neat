@@ -2,6 +2,7 @@
 #include "Network.h"
 #include "Species.h"
 #include <utility>
+#include <thread>
 using namespace std;
 
 class Neat {
@@ -12,6 +13,7 @@ public:
 	double speciesThreshold;
 	vector<Species> species;
 	int speciesId;
+	vector<thread> threads;
 
 	Neat(int numNetworks, int input, int output, double mutate, double lr);
 
@@ -19,6 +21,9 @@ public:
 	void printNeat();
 	void mutatePopulation();
 	
+	void trainNetworks(vector<pair<vector<double>, vector<double>>>& input);
+	void mateSpecies();
+
 	void speciateAll();
 	void checkSpecies();
 	void speciate(Network& n, Species* s);

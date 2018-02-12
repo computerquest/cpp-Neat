@@ -8,10 +8,12 @@
 #include <utility>
 #include <array>
 #include "Activation.h"
+#include <thread>
 using namespace std;
 
 Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : nodeMutate(mutate)
 {
+	threads = vector<std::thread>(8);
 	speciesThreshold = .01;
 	for (int i = output; i < input + output; i++) {
 		for (int a = 0; a < output; a++) {
@@ -43,8 +45,6 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 	mutatePopulation();
 
 	speciateAll();
-	printNeat();
-	checkSpecies();
 }
 
 //TODO: mthread
@@ -54,15 +54,8 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 	Network bestNet;
 	cout << isInput(network[0].getNode(3)) << " " << isOutput(network[0].getNode(3)) << endl;
 	double bestFit = 0;
-	//var wg sync.WaitGroup
 
-	//initial training
-	for (int i = 0; i < species.size(); i++) {
-		//wg.Add(1)
-		species[i].trainNetworks(input);
-	}
-
-	//wg.Wait()
+	trainNetworks(input);
 
 	for (int z = 0; strikes > 0 && bestFit < target; z++) {
 		cout << "//////////////////////////////////////////////////////////////" << endl;
@@ -73,22 +66,15 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 			//wg.Add(1)
 			species[i].mateSpecies();//&wg);
 		}
-
 		printNeat();
-		//wg.Wait()
 
-			//trains
-		{
-			for (int i = 0; i < species.size(); i++) {
-				//wg.Add(1)
-				species[i].trainNetworks(input);
-			}
-		}
-		//wg.Wait()
+		//mateSpecies();
+		printNeat();
+
+		trainNetworks(input);
 
 		if (z % 5 == 0) {
 			speciateAll();
-			checkSpecies();
 		}
 
 		//determines the best
@@ -110,11 +96,10 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 			mutatePopulation();
 			if (z % 5 != 0) {
 				speciateAll();
-				checkSpecies();
 			}
 		}
 
-		//printNeat();
+		printNeat();
 		cout << "best" << endl;
 		bestNet.printNetwork();
 		cout << "epoch:" << z << " best: " << bestFit << endl;
@@ -134,6 +119,46 @@ void Neat::mutatePopulation()
 	}
 }
 
+void Neat::trainNetworks(vector<pair<vector<double>, vector<double>>>& input)
+{
+	auto train = [this](vector<pair<vector<double>, vector<double>>>& input, int start, int end) {
+		for (int i = start; i <= end; i++) {
+			network[i].trainset(input, 100000);
+		}
+	};
+
+	int size = network.size() - 1;
+	int upper = size % threads.size() + size / threads.size();
+	threads[0] = thread(train, input, 0, upper);
+	for (int i = 1; i < threads.size(); i++, upper += size / threads.size()) {
+		threads[i] = thread(train, input, upper, upper + size / threads.size());
+	}
+
+	for (int i = 0; i < threads.size(); i++) {
+		threads[i].join();
+	}
+}
+
+void Neat::mateSpecies()
+{
+	auto train = [this](int start, int end) {
+		for (int i = start; i <= end; i++) {
+			species[i].mateSpecies();
+		}
+	};
+
+	int size = species.size() - 1;
+	int upper = size % threads.size() + size / threads.size();
+	threads[0] = thread(train, 0, upper);
+	for (int i = 1; i < threads.size(); i++, upper += size / threads.size()) {
+		threads[i] = thread(train, upper, upper + size / threads.size());
+	}
+
+	for (int i = 0; i < threads.size(); i++) {
+		threads[i].join();
+	}
+}
+
 void Neat::speciateAll()
 {
 	for (int a = 0; a < species.size(); a++) {
@@ -141,6 +166,8 @@ void Neat::speciateAll()
 			speciate(*species[a].network[i], &species[a]);
 		}
 	}
+
+	checkSpecies();
 }
 
 void Neat::checkSpecies()

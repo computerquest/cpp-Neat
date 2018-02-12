@@ -57,7 +57,7 @@ int main()
 		cout << random(0, 3) << endl;
 	}
 	  Network winner(0,0,0,0,0.0, false);
-	  Neat neat = Neat(20, 2, 1, .3, .5);
+	  Neat neat = Neat(20, 2, 1, .3, .1);
 
 	  winner = neat.start(data, 100, 100000);
 	  //neat.printNeat()

@@ -5,6 +5,7 @@
 #include<cstdlib>// for srand function.
 #include "Activation.h"
 #include <iostream>
+#include <mutex>
 using namespace std;
 
 vector<pair<int, int>>* Species::innovationDict;
@@ -93,13 +94,15 @@ pair<int, int> Species::getInnovationRef(int num)
 	return (*innovationDict)[num];
 }
 
+mutex mx;
 int Species::createNewInnovation(int a, int b)
 {
+	mx.lock();
 	//dictControl.Lock() TODO: fix the multithread
 	pair<int, int> c = { a, b };
 	(*innovationDict).push_back(c); //TODO: simplify
 	//defer dictControl.Unlock()
-
+	mx.unlock();
 	return innovationDict->size() - 1;
 }
 
@@ -356,10 +359,7 @@ void Species::mateSpecies()
 	//mutates for remainder of spots available
 	for (int i = 0; count < network.size(); i++) {
 		int id = network[count]->networkId;
-		cout << "clone" << endl;
-		sortedNetwork[i]->printNetwork();
 		clone(*sortedNetwork[i], *network[count], innovationDict);
-		network[count]->printNetwork();
 		mutateNetwork(*network[count]);
 		network[count]->networkId = id;
 		count++;
