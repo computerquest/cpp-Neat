@@ -3,6 +3,7 @@
 #include "Connection.h"
 #include "Node.h"
 #include <iostream>
+#include "Activation.h"
 using namespace std;
 
 Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon)
@@ -236,11 +237,35 @@ int Network::numConnection()
 
 void Network::resetWeight()
 {
-	for (int i = 0; i < nodeList.size(); i++) {
-		for (int a = 0; a < nodeList[i].send.size(); a++) {
-			nodeList[i].send[a].randWeight();
-			nodeList[i].send[a].nextWeight = 0;
+	int numIn = -1;
+	int numOut = -1;
+
+	vector<Node*> currentNodes;
+	for (int i = 0; i < input.size(); i++) {
+		currentNodes.push_back(input[i]);
+	}
+
+	while (numOut != 0) {
+		numIn = currentNodes.size();
+		numOut = 0;
+		vector<Node*> secondary;
+
+		for (int i = 0; i < currentNodes.size(); i++) {
+			numOut += currentNodes[i]->send.size();
+			for (int a = 0; a < currentNodes[i]->send.size(); a++) {
+				secondary.push_back(currentNodes[i]->send[a].nodeTo);
+			}
 		}
+
+		double value = 2 / (double)(numIn + numOut);
+
+		for (int i = 0; i < currentNodes.size(); i++) {
+			for (int a = 0; a < currentNodes[i]->send.size(); a++) {
+				currentNodes[i]->send[a].weight = random(0 - value, value);
+			}
+		}
+
+		currentNodes = secondary;
 	}
 }
 

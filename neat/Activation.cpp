@@ -32,3 +32,13 @@ int random(int f, int t)
 
 	return uint_dist10(rng);
 }
+
+double random(double f, double t)
+{
+	int a = f * RAND_MAX;
+	int b = t * RAND_MAX;
+	std::uniform_int_distribution<int32_t> uint_dist10(a, b);
+
+	return uint_dist10(rng)/(double)RAND_MAX;
+}
+

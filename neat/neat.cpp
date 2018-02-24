@@ -59,17 +59,14 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 
 	for (int z = 0; strikes > 0 && bestFit < target; z++) {
 		cout << "//////////////////////////////////////////////////////////////" << endl;
-		printNeat();
 		cout << "/////////////////////" << endl;
 		//mates
 		for (int i = 0; i < species.size(); i++) {
 			//wg.Add(1)
 			species[i].mateSpecies();//&wg);
 		}
-		printNeat();
 
 		//mateSpecies();
-		printNeat();
 
 		trainNetworks(input);
 
@@ -99,7 +96,6 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 			}
 		}
 
-		printNeat();
 		cout << "best" << endl;
 		bestNet.printNetwork();
 		cout << "epoch:" << z << " best: " << bestFit << endl;
@@ -111,7 +107,7 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 
 void Neat::mutatePopulation()
 {
-	int numNet = random(3, network.size() / 5); // rand() % ((network.size() - 3) / 5) + 3;
+	int numNet = random(3, network.size() / 5 +3); // rand() % ((network.size() - 3) / 5) + 3;
 	for (int i = 0; i < numNet; i++) {
 		int species = random(0, this->species.size() - 1); // int(rand() % (this->species.size()));
 
@@ -121,7 +117,7 @@ void Neat::mutatePopulation()
 
 void Neat::trainNetworks(vector<pair<vector<double>, vector<double>>>& input)
 {
-	auto train = [this](vector<pair<vector<double>, vector<double>>>& input, int start, int end) {
+	/*auto train = [this](vector<pair<vector<double>, vector<double>>>& input, int start, int end) {
 		for (int i = start; i <= end; i++) {
 			network[i].trainset(input, 100000);
 		}
@@ -132,6 +128,14 @@ void Neat::trainNetworks(vector<pair<vector<double>, vector<double>>>& input)
 	threads[0] = thread(train, input, 0, upper);
 	for (int i = 1; i < threads.size(); i++, upper += size / threads.size()) {
 		threads[i] = thread(train, input, upper, upper + size / threads.size());
+	}
+
+	for (int i = 0; i < threads.size(); i++) {
+		threads[i].join();
+	}*/
+	threads.clear();
+	for (int i = 0; i < species.size(); i++) {
+		threads.push_back(thread(&Species::trainNetworks, &species[i], input));
 	}
 
 	for (int i = 0; i < threads.size(); i++) {

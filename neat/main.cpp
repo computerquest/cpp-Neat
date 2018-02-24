@@ -53,20 +53,21 @@ int main()
 	}
 
 	randInit();
-	for (int i = 0; i < 50; i++) {
-		cout << random(0, 3) << endl;
+
+	for (int i = 0; i < 100; i++) {
+		cout << random(-1.0, 1.0) << endl;
 	}
-	  Network winner(0,0,0,0,0.0, false);
-	  Neat neat = Neat(20, 2, 1, .3, .1);
+	Network winner(0, 0, 0, 0, 0.0, false);
+	Neat neat = Neat(10, 2, 1, .3, .1);
 
-	  winner = neat.start(data, 100, 100000);
-	  //neat.printNeat()
+	winner = neat.start(data, 100, 100000);
+	//neat.printNeat()
 
-	  cout << endl;
+	cout << endl;
 
-	  //printNetwork(&winner);
-	  cout << "best " << winner.fitness << "error" << 1 / winner.fitness << endl;
-	  //cout << "result: " << winner.process(data[0].first) << winner.process(data[1].first) << winner.process(data[2].first) << winner.process(data[3].first) << endl; //1 1 0 0
-	  cout << "done";
-	  return 0;
+	//printNetwork(&winner);
+	cout << "best " << winner.fitness << "error" << 1 / winner.fitness << endl;
+	//cout << "result: " << winner.process(data[0].first) << winner.process(data[1].first) << winner.process(data[2].first) << winner.process(data[3].first) << endl; //1 1 0 0
+	cout << "done";
+	return 0;
 }
