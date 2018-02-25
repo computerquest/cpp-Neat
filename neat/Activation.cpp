@@ -21,10 +21,28 @@ double sigmoid(double value) {
 double sigmoidDerivative(double value) {
 	return sigmoid(value) * (1 - sigmoid(value));
 }
-
+double lRelu(double value)
+{
+	if (value >= 0) {
+		return value;
+	}
+	else {
+		return .01*value;
+	}
+}
+double lReluDerivative(double value)
+{
+	if (value < 0) {
+		return .01;
+	}
+	else {
+		return 0;
+	}
+}
 void randInit() {
 	rng.seed(time(NULL));
 }
+
 //generates number [f,t]
 int random(int f, int t)
 {

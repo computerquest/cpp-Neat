@@ -113,7 +113,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 
 	//initializes best weights
 	vector<vector<double>> bestWeight;
-
+	double globalBest = 100000;
 	resetWeight(); //clears the current weight values
 
 	int strikes = 10; //number of times in a row that error can increase
@@ -146,7 +146,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 		if (errorChange >= 0) {
 			strikes--;
 		}
-		else {
+		else if (currentError < globalBest){
 			bestWeight.clear();
 			for (int i = 0; i < nodeList.size(); i++) {
 				vector<double> one;
@@ -156,6 +156,11 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 				}
 				bestWeight.push_back(one);
 			}
+			strikes = 10;
+
+			globalBest = currentError;
+		}
+		else {
 			strikes = 10;
 		}
 
