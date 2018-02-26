@@ -15,13 +15,13 @@ Network::Network(int inputI, int outputI, int id, int species, double learningRa
 
 	//create output nodes
 	for (int i = 0; i < outputI; i++) {
-		output.push_back(&createNode(0));
+		output.push_back(&createNode(0, &tanh, &tanhDerivative));
 	}
 
 	//creates the input nodes and adds them to the network
 	int startInov = 0; //this should work
 	for (int i = 0; i < inputI; i++) {
-		input.push_back(&createNode(100));
+		input.push_back(&createNode(100, &tanh, &tanhDerivative));
 		if (addCon) {
 			for (int a = 0; a < outputI; a++) {
 				mutateConnection(input[i]->id, output[a]->id, startInov);
@@ -29,7 +29,7 @@ Network::Network(int inputI, int outputI, int id, int species, double learningRa
 			}
 		}
 	}
-	input.push_back(&createNode(100)); //bias starts unconnected and will form connections over time
+	input.push_back(&createNode(100, &tanh, &tanhDerivative)); //bias starts unconnected and will form connections over time
 	fitness = -5;
 	adjustedFitness = -5;
 }
@@ -49,7 +49,18 @@ void Network::printNetwork()
 
 	for (int i = 0; i < nodeList.size(); i++) {
 		Node& n = nodeList[i];
-		cout << "	Node: " << n.id << " Sending: ";
+		string act = "";
+		if (n.activation == &tanh) {
+			act = "tanh";
+		}
+		else if (n.activation == &sigmoid) {
+			act = "sig";
+		}
+		else if (n.activation == &lRelu) {
+			act = "lRelu";
+		}
+
+		cout << "	Node: " << n.id << " activation: " << act.c_str() <<" Sending: ";
 		for (int a = 0; a < n.send.size(); a++) {
 			cout << n.send[a].nodeTo->id << " ";
 		}
@@ -146,7 +157,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 		if (errorChange >= 0) {
 			strikes--;
 		}
-		else if (currentError < globalBest){
+		else if (currentError < globalBest) {
 			bestWeight.clear();
 			for (int i = 0; i < nodeList.size(); i++) {
 				vector<double> one;
@@ -281,9 +292,32 @@ Node& Network::getNode(int i)
 
 Node& Network::createNode(int send)
 {
+	double(*activation)(double value);
+	double(*activationDerivative)(double value);
+
+	int rand = random(1, 9);
+	if (rand <= 3) {
+		activation = &lRelu;
+		activationDerivative = &lReluDerivative;
+	}
+	else if (rand <= 6) {
+		activation = &sigmoid;
+		activationDerivative = &sigmoidDerivative;
+	}
+	else {
+		activation = &tanh;
+		activationDerivative = &tanhDerivative;
+	}
 	int a = nodeList.size();
-	nodeList.push_back(Node(a, send));
+	nodeList.push_back(Node(a, send, activation, activationDerivative));
 	return nodeList.back();
+}
+Node& Network::createNode(int send, double(*activation)(double value), double(*activationDerivative)(double value))
+{
+	Node& n = createNode(send);
+	n.activation = activation;
+	n.activationDerivative = activationDerivative;
+	return n;
 }
 
 int Network::getNextNodeId()
@@ -319,6 +353,14 @@ int Network::mutateNode(int from, int to, int innovationA, int innovationB)
 	}
 
 	return newNode.id;
+}
+
+int Network::mutateNode(int from, int to, int innovationA, int innovationB, double(*activation)(double value), double(*activationDerivative)(double value))
+{
+	Node& n = nodeList[mutateNode(from, to, innovationA, innovationB)];
+	n.activation = activation;
+	n.activationDerivative = activationDerivative;
+	return 0;
 }
 
 bool Network::checkCircleMaster(Node& n, int goal)
@@ -367,24 +409,16 @@ bool Network::checkCircle(Node& n, int goal, int preCheck[])
 
 void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
 {
-	int max = n.nodeList.size();
-
-	vector<pair<int, double>> innovation;
-	for (int i = 0; i < n.nodeList.size(); i++) {
-		for (int a = 0; a < n.nodeList[i].send.size(); a++) {
-			innovation.push_back(pair<int, double>(n.nodeList[i].send[a].innovation, n.nodeList[i].send[a].weight));
-		}
-	}
-
-	//need to totally reconstruct because otherwise the pointers in connections and such would be screwed up
 	ans = Network(n.input.size() - 1, n.output.size(), n.networkId, n.species, n.learningRate, false);
 
-	for (int i = 0; i < max - ans.input.size() - ans.output.size(); i++) {
-		ans.createNode(100);
+	for (int i = n.output.size() + n.input.size(); i < n.nodeList.size(); i++) {
+		ans.createNode(100, n.nodeList[i].activation, n.nodeList[i].activationDerivative);
 	}
-
-	for (int i = 0; i < innovation.size(); i++) {
-		ans.mutateConnection((*innovationDict)[innovation[i].first].first, (*innovationDict)[innovation[i].first].second, innovation[i].first, innovation[i].second);
+	for (int i = 0; i < n.nodeList.size(); i++) {
+		Node* node = &n.nodeList[i];
+		for (int a = 0; a < n.nodeList[i].send.size(); a++) {
+			ans.mutateConnection((*innovationDict)[node->send[a].innovation].first, (*innovationDict)[node->send[a].innovation].second, node->send[a].innovation, node->send[a].weight);
+		}
 	}
 
 	ans.fitness = n.fitness;

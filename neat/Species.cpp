@@ -256,40 +256,52 @@ void Species::mutateNetwork(Network& network)
 	}
 }
 
-void Species::mateNetwork(vector<int>& nB, vector<int>& nA, int nodeNum, int nodeNumA, Network& ans)
+void Species::mateNetwork(vector<Node>& nB, vector<Node>& nA, bool bBetter, Network& ans)
 {
 	int in = network[0]->input.size() - 1;
 	int out = network[0]->output.size();
 	ans = Network(in, out, -1, id, network[0]->learningRate, false);
 
-	int numNode = -1 * (in + out + 1); //subtract input and output nodes because those are already created
-	if (nodeNum > nodeNumA) {
-		numNode += nodeNum;
+	vector<Node>* numNode;
+	vector<Node>* l;
+	if (nB.size() > nA.size()) {
+		numNode = &nB;
+		l = &nA;
 	}
 	else {
-		numNode += nodeNumA;
+		l = &nB;
+		numNode = &nA;
 	}
+
 	//create the nodes
-	for (int i = 0; i < numNode; i++) { //this should be ok
-		ans.createNode(100);
+	for (int i = (in + out+1); i < numNode->size(); i++) { //this should be ok
+		if (bBetter & i < nB.size() || i >= nA.size()) {
+			ans.createNode(100, nB[i].activation, nB[i].activationDerivative);
+		}
+		else {
+			ans.createNode(100, nA[i].activation, nA[i].activationDerivative);
+		}
 	}
 
 	//add nA innovation
-	for (int i = 0; i < nA.size(); i++) {
-		pair<int, int> ina = getInnovationRef(nA[i]);
-		ans.mutateConnection(ina.first, ina.second, nA[i]);
+	for (int i = 0; i < numNode->size(); i++) {
+		for (int a = 0; a < (*numNode)[i].send.size(); a++) {
+			pair<int, int> ina = getInnovationRef((*numNode)[i].send[a].innovation);
+			ans.mutateConnection(ina.first, ina.second, (*numNode)[i].send[a].innovation);
+		}
 	}
 
-	//add unique nB innovation
-	for (int i = 0; i < nB.size(); i++) {
-		pair<int, int> inb = getInnovationRef(nB[i]);
-		int firstNode = inb.first;
-		int secondNode = inb.second;
+	//add unique (*l) innovation
+	for (int i = 0; i < l->size(); i++) {
+		for (int a = 0; a < (*l)[i].send.size(); a++) {
+			pair<int, int> inb = getInnovationRef((*l)[i].send[a].innovation);
+			int firstNode = inb.first;
+			int secondNode = inb.second;
 
-		//checks to make sure their is no conflict in possible innovations
-		if (!ans.containsInnovation(nB[i]) && !(ans.getNode(firstNode).connectsTo(secondNode) || ans.getNode(secondNode).connectsTo(firstNode)) && !ans.checkCircleMaster(ans.getNode(firstNode), secondNode)) {
-			pair<int, int> ina = getInnovationRef(nB[i]);
-			ans.mutateConnection(ina.first, ina.second, nB[i]);
+			//checks to make sure their is no conflict in possible innovations
+			if (!(ans.containsInnovation((*l)[i].send[a].innovation) || ans.getNode(firstNode).connectsTo(secondNode) || ans.getNode(secondNode).connectsTo(firstNode) || ans.checkCircleMaster(ans.getNode(firstNode), secondNode))) {
+				ans.mutateConnection(firstNode, secondNode, (*l)[i].send[a].innovation);
+			}
 		}
 	}
 }
@@ -345,11 +357,11 @@ void Species::mateSpecies()
 	for (int i = 0; i < sortedNetwork.size(); i++) {
 		int numKids = int(sortedNetwork[i]->adjustedFitness / sumFitness * network.size());
 		int numMade = numKids;
-		vector<int> currentIn = sortedNetwork[i]->innovation;
+		vector<Node> currentIn = sortedNetwork[i]->nodeList;
 		int currentNL = sortedNetwork[i]->nodeList.size();
 		for (int a = 1; count < network.size() && a + i < sortedNetwork.size(); a++) {
 			int id = sortedNetwork[i]->networkId;
-			mateNetwork(currentIn, sortedNetwork[i + a]->innovation, currentNL, sortedNetwork[i + a]->nodeList.size(), *sortedNetwork[i]);
+			mateNetwork(currentIn, sortedNetwork[i + a]->nodeList, sortedNetwork[i]->fitness > sortedNetwork[i+a]->fitness, *sortedNetwork[i]);
 			sortedNetwork[i]->networkId = id;
 			count++;
 			numMade--;

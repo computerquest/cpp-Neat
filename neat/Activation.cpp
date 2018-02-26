@@ -36,7 +36,7 @@ double lReluDerivative(double value)
 		return .01;
 	}
 	else {
-		return 0;
+		return 1;
 	}
 }
 void randInit() {

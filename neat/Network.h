@@ -34,8 +34,10 @@ public:
 
 	Node& getNode(int i);
 	Node& createNode(int send);
+	Node& createNode(int send, double(*activation)(double value), double(*activationDerivative)(double value));
 	int getNextNodeId();
 	int mutateNode(int from, int to, int innovationA, int innovationB);
+	int mutateNode(int from, int to, int innovationA, int innovationB, double(*activation)(double value), double(*activationDerivative)(double value));
 	bool checkCircleMaster(Node& n, int goal);
 	bool checkCircle(Node& n, int goal, int preCheck[]);
 };
