@@ -13,6 +13,7 @@ Connection::Connection(Node * fromNode, Node * toNode, int inNumber)
 	nodeTo = toNode;
 	innovation = inNumber;
 	nextWeight = 0;
+	lastWeight = 0;
 
 	randWeight();
 }
@@ -32,3 +33,12 @@ void Connection::notifyInfluence()
 {
 	nodeFrom->recieveInfluence();
 }
+
+double Connection::setWeight(double v) {
+	lastWeight = weight;
+	weight = v;
+	nextWeight = 0;
+
+	return v;
+}
+

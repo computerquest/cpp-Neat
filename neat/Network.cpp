@@ -60,7 +60,7 @@ void Network::printNetwork()
 			act = "lRelu";
 		}
 
-		cout << "	Node: " << n.id << " activation: " << act.c_str() <<" Sending: ";
+		cout << "	Node: " << n.id << " activation: " << act.c_str() << " Sending: ";
 		for (int a = 0; a < n.send.size(); a++) {
 			cout << n.send[a].nodeTo->id << " ";
 		}
@@ -131,22 +131,16 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 	for (int z = 1; strikes > 0 && z < lim && lastError > .000001; z++) {
 		double currentError = 0.0;
 
-		//resets all the nextWeights
-		for (int i = 0; i < nodeList.size(); i++) {
-			for (int a = 0; a < nodeList[i].send.size(); a++) {
-				nodeList[i].send[a].nextWeight = 0;
-			}
-		}
-
 		//trains each input
-		for (int i = 0; i < input.size(); i++) { //TODO: might not work
+		for (int i = 0; i < input.size(); i++) {
 			currentError += backProp(input[i].first, input[i].second);
 		}
 
 		//updates all the weight
 		for (int i = 0; i < nodeList.size(); i++) {
 			for (int a = 0; a < nodeList[i].send.size(); a++) {
-				nodeList[i].send[a].weight += nodeList[i].send[a].nextWeight / input.size();
+				Connection& c = nodeList[i].send[a];
+				nodeList[i].send[a].setWeight(c.weight + c.nextWeight / input.size() + (c.weight-c.lastWeight)*.9); //currentWeight + avg change + momentum
 			}
 		}
 
@@ -278,6 +272,8 @@ void Network::resetWeight()
 		for (int i = 0; i < currentNodes.size(); i++) {
 			for (int a = 0; a < currentNodes[i]->send.size(); a++) {
 				currentNodes[i]->send[a].weight = random(0 - value, value);
+				currentNodes[i]->send[a].nextWeight = 0;;
+				currentNodes[i]->send[a].lastWeight = 0;
 			}
 		}
 
@@ -305,7 +301,7 @@ Node& Network::createNode(int send)
 		activationDerivative = &sigmoidDerivative;
 	}
 	else {
-		activation = &tanh; 
+		activation = &tanh;
 		activationDerivative = &tanhDerivative;
 	}
 	int a = nodeList.size();
