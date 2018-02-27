@@ -305,7 +305,7 @@ Node& Network::createNode(int send)
 		activationDerivative = &sigmoidDerivative;
 	}
 	else {
-		activation = &tanh;
+		activation = &tanh; 
 		activationDerivative = &tanhDerivative;
 	}
 	int a = nodeList.size();

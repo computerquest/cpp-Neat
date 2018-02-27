@@ -69,5 +69,6 @@ int main()
 	cout << "best " << winner.fitness << "error" << 1 / winner.fitness << endl;
 	//cout << "result: " << winner.process(data[0].first) << winner.process(data[1].first) << winner.process(data[2].first) << winner.process(data[3].first) << endl; //1 1 0 0
 	cout << "done";
+	system("pause");
 	return 0;
 }

@@ -218,9 +218,31 @@ void Species::mutateNetwork(Network& network)
 		network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode));
 	};
 
+	int r = random(0, 100);
 	//randomly picks if node or connection mutate
-	if (random(0, 100) <= mutate * 100) {
+	if (r <= mutate * 100) {
 		nodeMutate();
+	}
+	else if (r >= 90) { //TODO: customize
+		int numNode = .1*network.nodeList.size();
+
+		for (int i = 0; i < numNode; i++) {
+			int rand = random(1, 9);
+			Node& n = network.nodeList[random((int)network.input.size() + network.output.size(), (int)network.nodeList.size()-1)];
+
+			if (i <= 3) {
+				n.activation = &tanh;
+				n.activationDerivative = &tanhDerivative;
+			}
+			else if (i <= 6) {
+				n.activation = &sigmoid;
+				n.activationDerivative = &sigmoidDerivative;
+			}
+			else {
+				n.activation = &lRelu;
+				n.activationDerivative = &lReluDerivative;
+			}
+		}
 	}
 	else {
 		int firstNode;
