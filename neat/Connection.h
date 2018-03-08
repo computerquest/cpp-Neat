@@ -9,7 +9,11 @@ public:
 	Node* nodeTo;
 	Node* nodeFrom;
 	int innovation;
-	double lastWeight;
+	double momentum;
+	double velocity;
+	double beta;
+	double betaA;
+	double epsilon;
 
 	Connection(Node* fromNode, Node* toNode, int inNumber);
 
