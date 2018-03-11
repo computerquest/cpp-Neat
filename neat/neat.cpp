@@ -47,7 +47,6 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 	speciateAll();
 }
 
-//TODO: mthread
 Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cutoff, double target)
 {
 	int strikes = cutoff;
@@ -60,13 +59,8 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, int cut
 	for (int z = 0; strikes > 0 && bestFit < target; z++) {
 		cout << "//////////////////////////////////////////////////////////////" << endl;
 		cout << "/////////////////////" << endl;
-		//mates
-		for (int i = 0; i < species.size(); i++) {
-			//wg.Add(1)
-			species[i].mateSpecies();//&wg);
-		}
 
-		//mateSpecies();
+		mateSpecies();
 
 		trainNetworks(input);
 
@@ -117,22 +111,6 @@ void Neat::mutatePopulation()
 
 void Neat::trainNetworks(vector<pair<vector<double>, vector<double>>>& input)
 {
-	/*auto train = [this](vector<pair<vector<double>, vector<double>>>& input, int start, int end) {
-		for (int i = start; i <= end; i++) {
-			network[i].trainset(input, 100000);
-		}
-	};
-
-	int size = network.size() - 1;
-	int upper = size % threads.size() + size / threads.size();
-	threads[0] = thread(train, input, 0, upper);
-	for (int i = 1; i < threads.size(); i++, upper += size / threads.size()) {
-		threads[i] = thread(train, input, upper, upper + size / threads.size());
-	}
-
-	for (int i = 0; i < threads.size(); i++) {
-		threads[i].join();
-	}*/
 	threads.clear();
 	for (int i = 0; i < species.size(); i++) {
 		threads.push_back(thread(&Species::trainNetworks, &species[i], input));
@@ -145,20 +123,27 @@ void Neat::trainNetworks(vector<pair<vector<double>, vector<double>>>& input)
 
 void Neat::mateSpecies()
 {
+	threads.clear();
 	auto train = [this](int start, int end) {
-		for (int i = start; i <= end; i++) {
+		for (int i = start; i < end; i++) {
 			species[i].mateSpecies();
 		}
 	};
 
-	int size = species.size() - 1;
-	int upper = size % threads.size() + size / threads.size();
-	threads[0] = thread(train, 0, upper);
-	for (int i = 1; i < threads.size(); i++, upper += size / threads.size()) {
-		threads[i] = thread(train, upper, upper + size / threads.size());
+	int inc = ((species.size()-1)/(double) threads.size());
+	if (inc < 1) {
+		inc = 1;
+	}
+	int upper = inc;
+	int usedThreads = 1;
+	threads[0] = thread(train, 0, inc);
+	while (usedThreads < threads.size() && upper < species.size()) {//, upper += size / threads.size()) {
+		threads[usedThreads] = thread(train, upper, upper + inc);
+		usedThreads++;
+		upper += inc;
 	}
 
-	for (int i = 0; i < threads.size(); i++) {
+	for (int i = 0; i < usedThreads; i++) {
 		threads[i].join();
 	}
 }
