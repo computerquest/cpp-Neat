@@ -4,6 +4,7 @@
 #include "Node.h"
 #include <iostream>
 #include "Activation.h"
+#include <math.h>
 using namespace std;
 
 Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon)
@@ -110,7 +111,7 @@ double Network::backProp(vector<double>& input, vector<double>& desired)
 	//actually adjusts the weights
 	for (int i = 0; i < nodeList.size(); i++) {
 		for (int a = 0; a < nodeList[i].recieve.size(); a++) {
-			nodeList[i].recieve[a]->nextWeight -= (nodeList[i].recieve[a]->nodeFrom->value) * nodeList[i].influence * learningRate;
+			nodeList[i].recieve[a]->nextWeight += (nodeList[i].recieve[a]->nodeFrom->value) * nodeList[i].influence;
 		}
 	}
 
@@ -140,7 +141,12 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 		for (int i = 0; i < nodeList.size(); i++) {
 			for (int a = 0; a < nodeList[i].send.size(); a++) {
 				Connection& c = nodeList[i].send[a];
-				nodeList[i].send[a].setWeight(c.weight + c.nextWeight / input.size() + (c.weight-c.lastWeight)*.9); //currentWeight + avg change + momentum
+				double g = c.nextWeight / input.size();
+				c.momentum = (c.beta*c.momentum) + ((1 - c.beta)*g);
+				c.velocity = c.betaA*c.velocity + (1 - c.betaA)*pow(g, 2);
+				double vhat = c.velocity / (1 - pow(c.betaA, z)); //z has to start at 1
+				double mhat = c.momentum / (1 - pow(c.beta, z));
+				nodeList[i].send[a].setWeight(c.weight - (learningRate / (sqrt(vhat) + c.epsilon)) * (c.beta*mhat + ((1 - c.beta)*g / (1 - pow(c.beta, z)))));
 			}
 		}
 
@@ -189,6 +195,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 	}
 
 	fitness = 1 / final;
+	//cout << "final training is " << fitness << endl;
 	return final;
 }
 
@@ -273,7 +280,8 @@ void Network::resetWeight()
 			for (int a = 0; a < currentNodes[i]->send.size(); a++) {
 				currentNodes[i]->send[a].weight = random(0 - value, value);
 				currentNodes[i]->send[a].nextWeight = 0;;
-				currentNodes[i]->send[a].lastWeight = 0;
+				currentNodes[i]->send[a].momentum = 0;
+				currentNodes[i]->send[a].velocity = 0;
 			}
 		}
 
