@@ -124,26 +124,11 @@ void Neat::trainNetworks(vector<pair<vector<double>, vector<double>>>& input)
 void Neat::mateSpecies()
 {
 	threads.clear();
-	auto train = [this](int start, int end) {
-		for (int i = start; i < end; i++) {
-			species[i].mateSpecies();
-		}
-	};
 
-	int inc = ((species.size()-1)/(double) threads.size());
-	if (inc < 1) {
-		inc = 1;
+	for (int i = 0; i < species.size(); i++) {
+		threads.push_back(thread(&Species::mateSpecies, &species[i]));
 	}
-	int upper = inc;
-	int usedThreads = 1;
-	threads[0] = thread(train, 0, inc);
-	while (usedThreads < threads.size() && upper < species.size()) {//, upper += size / threads.size()) {
-		threads[usedThreads] = thread(train, upper, upper + inc);
-		usedThreads++;
-		upper += inc;
-	}
-
-	for (int i = 0; i < usedThreads; i++) {
+	for (int i = 0; i < threads.size(); i++) {
 		threads[i].join();
 	}
 }
