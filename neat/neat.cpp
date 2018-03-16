@@ -11,7 +11,7 @@
 #include <thread>
 using namespace std;
 
-Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : nodeMutate(mutate)
+Neat::Neat(int numNetworks, int input, int output, double mutate, double lr, double(*activation)(double value), double(*activationDerivative)(double value)) : nodeMutate(mutate)
 {
 	threads = vector<std::thread>(8);
 	speciesThreshold = .01;
@@ -25,7 +25,7 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr) : n
 	network.reserve(numNetworks);
 
 	for (int i = 0; i < numNetworks; i++) {
-		network.push_back(Network(input, output, i, 0, lr, true));
+		network.push_back(Network(input, output, i, 0, lr, true, activation, activationDerivative));
 	}
 
 	createSpecies(0, network.size() % 5 + network.size() / 5);

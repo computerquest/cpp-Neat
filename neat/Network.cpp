@@ -7,22 +7,24 @@
 #include <math.h>
 using namespace std;
 
-Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon)
+Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon, double(*activation)(double value), double(*activationDerivative)(double value))
 {
 	nodeList.reserve(100);
 	networkId = id;
 	this->learningRate = learningRate;
 	this->species = species;
+	this->activation = activation;
+	this->activationDerivative = activationDerivative;
 
 	//create output nodes
 	for (int i = 0; i < outputI; i++) {
-		output.push_back(&createNode(0, &tanh, &tanhDerivative));
+		output.push_back(&createNode(0, activation, activationDerivative));
 	}
 
 	//creates the input nodes and adds them to the network
 	int startInov = 0; //this should work
 	for (int i = 0; i < inputI; i++) {
-		input.push_back(&createNode(100, &tanh, &tanhDerivative));
+		input.push_back(&createNode(100, activation, activationDerivative));
 		if (addCon) {
 			for (int a = 0; a < outputI; a++) {
 				mutateConnection(input[i]->id, output[a]->id, startInov);
@@ -30,7 +32,7 @@ Network::Network(int inputI, int outputI, int id, int species, double learningRa
 			}
 		}
 	}
-	input.push_back(&createNode(100, &tanh, &tanhDerivative)); //bias starts unconnected and will form connections over time
+	input.push_back(&createNode(100, activation, activationDerivative)); //bias starts unconnected and will form connections over time
 	fitness = -5;
 	adjustedFitness = -5;
 }
@@ -51,7 +53,7 @@ void Network::printNetwork()
 	for (int i = 0; i < nodeList.size(); i++) {
 		Node& n = nodeList[i];
 		string act = "";
-		if (n.activation == &tanh) {
+		if (n.activation == &tanh) { //ignore if error
 			act = "tanh";
 		}
 		else if (n.activation == &sigmoid) {
@@ -413,7 +415,7 @@ bool Network::checkCircle(Node& n, int goal, int preCheck[])
 
 void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
 {
-	ans = Network(n.input.size() - 1, n.output.size(), n.networkId, n.species, n.learningRate, false);
+	ans = Network(n.input.size() - 1, n.output.size(), n.networkId, n.species, n.learningRate, false, ans.activation, ans.activationDerivative);
 
 	for (int i = n.output.size() + n.input.size(); i < n.nodeList.size(); i++) {
 		ans.createNode(100, n.nodeList[i].activation, n.nodeList[i].activationDerivative);

@@ -15,7 +15,7 @@ public:
 	int speciesId;
 	vector<thread> threads;
 
-	Neat(int numNetworks, int input, int output, double mutate, double lr);
+	Neat(int numNetworks, int input, int output, double mutate, double lr, double(*activation)(double value), double(*activationDerivative)(double value));
 
 	Network start(vector<pair<vector<double>,vector<double>>>& input, int cutoff, double target); //returning network will not work
 	void printNeat();

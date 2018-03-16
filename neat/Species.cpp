@@ -282,7 +282,7 @@ void Species::mateNetwork(vector<Node>& nB, vector<Node>& nA, bool bBetter, Netw
 {
 	int in = network[0]->input.size() - 1;
 	int out = network[0]->output.size();
-	ans = Network(in, out, -1, id, network[0]->learningRate, false);
+	ans = Network(in, out, -1, id, network[0]->learningRate, false, ans.activation, ans.activationDerivative);
 
 	vector<Node>* numNode;
 	vector<Node>* l;
@@ -328,7 +328,6 @@ void Species::mateNetwork(vector<Node>& nB, vector<Node>& nA, bool bBetter, Netw
 	}
 }
 
-//TODO: multithread
 void Species::trainNetworks(vector<pair<vector<double>, vector<double>>>& trainingSet)
 {
 	for (int i = 0; i < network.size(); i++) {

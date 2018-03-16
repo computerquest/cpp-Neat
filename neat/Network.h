@@ -14,8 +14,10 @@ public:
 	double adjustedFitness;
 	int networkId;
 	int species;
-	
-	Network(int input, int output, int id, int species, double learningRate, bool addCon);
+	double(*activation)(double value);
+	double(*activationDerivative)(double value);
+
+	Network(int input, int output, int id, int species, double learningRate, bool addCon, double(*activation)(double value), double(*activationDerivative)(double value));
 	Network(); // do not use
 
 	void printNetwork();
