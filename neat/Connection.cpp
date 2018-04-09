@@ -25,7 +25,7 @@ Connection::Connection(Node * fromNode, Node * toNode, int inNumber)
 void Connection::randWeight()
 {
 	srand(unsigned(time(NULL)));
-	weight = ((rand()%10)/10)*.2 + .4;
+	weight = ((rand() % 10) / 10)*.2 + .4;
 }
 
 void Connection::notifyValue()
@@ -44,4 +44,3 @@ double Connection::setWeight(double v) {
 
 	return v;
 }
-

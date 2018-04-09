@@ -5,6 +5,7 @@ using namespace std;
 
 class Network {
 public:
+	int networkId;
 	vector<Node> nodeList;
 	vector<int> innovation;
 	double learningRate;
@@ -12,7 +13,6 @@ public:
 	vector<Node*> output;
 	double fitness;
 	double adjustedFitness;
-	int networkId;
 	int species;
 	double(*activation)(double value);
 	double(*activationDerivative)(double value);
@@ -23,7 +23,7 @@ public:
 	void printNetwork();
 	vector<double> process(vector<double>& input);
 	double backProp(vector<double>& input, vector<double>& desired);
-	double trainset(vector<pair<vector<double>, vector<double>>>& input, int lim);
+	double trainset(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid, int lim);
 	int getInnovation(int pos);
 	void addInnovation(int num);
 	bool containsInnovation(int num);

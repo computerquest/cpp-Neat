@@ -54,18 +54,17 @@ int main()
 
 	randInit();
 
-	for (int i = 0; i < 100; i++) {
-		cout << random(-1.0, 1.0) << endl;
-	}
-	Neat neat = Neat(250, 2, 1, .3, .1, &tanh, &tanhDerivative);
+	Neat neat = Neat(50, 2, 1, .3, .1, &sigmoid, &sigmoidDerivative);
 
-	Network winner= neat.start(data, 50, 10000000);
+	Network winner;
+	
+	neat.start(data, data, 10, 1000000, winner);
 	//neat.printNeat()
 
 	cout << endl;
 
 	//printNetwork(&winner);
-	cout << "best " << winner.fitness << "error" << 1 / winner.fitness << endl;
+	cout << "best " << winner.fitness << " error " << 1 / winner.fitness << endl;
 	cout << "result: " << winner.process(data[0].first)[0] << " " << winner.process(data[1].first)[0] << " " << winner.process(data[2].first)[0] << " " << winner.process(data[3].first)[0] << endl; //1 1 0 0
 	cout << "done";
 	system("pause");

@@ -17,11 +17,11 @@ public:
 
 	Neat(int numNetworks, int input, int output, double mutate, double lr, double(*activation)(double value), double(*activationDerivative)(double value));
 
-	Network start(vector<pair<vector<double>,vector<double>>>& input, int cutoff, double target); //returning network will not work
+	Network start(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid, int cutoff, double target, Network& betNet); //returning network will not work
 	void printNeat();
 	void mutatePopulation();
-	
-	void trainNetworks(vector<pair<vector<double>, vector<double>>>& input);
+
+	void trainNetworks(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid);
 	void mateSpecies();
 
 	void speciateAll();
@@ -29,8 +29,10 @@ public:
 	void speciate(Network& n, Species* s);
 	double compareGenome(int node, vector<int>& innovation, int nodeA, vector<int>& innovationA);
 
-	//int* getInnovation(int num);
-	//int findInnovation(int search[2]);
+	//pair<int,int> getInnovation(int num);
+	//int addInnovation(int a, int b);
+	//int innovationSize(int a);
+
 	Species& getSpecies(int id);
 	Species& createSpecies(vector<Network*>& possible);
 	Species& createSpecies(int startIndex, int endIndex);

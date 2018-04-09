@@ -5,6 +5,7 @@
 #include <iostream>
 #include "Activation.h"
 #include <math.h>
+#include <mutex>
 using namespace std;
 
 Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon, double(*activation)(double value), double(*activationDerivative)(double value))
@@ -102,7 +103,7 @@ double Network::backProp(vector<double>& input, vector<double>& desired)
 
 	double error = 0.0; //return value
 
-					  //this will calc all the influence
+						//this will calc all the influence
 	for (int i = 0; i < output.size(); i++) {
 		output[i]->setInfluence(output[i]->value - desired[i]);
 		error += abs(output[i]->value - desired[i]);
@@ -120,46 +121,74 @@ double Network::backProp(vector<double>& input, vector<double>& desired)
 	return error;
 }
 
-double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, int lim)
+/*
+input: the training examples
+valid: the validation examples
+lim: the maximum number of iterations
+*/
+double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid, int lim)
 {
 	double errorChange = -1000.0; //percent of error change
-	double lastError = 1000.0;
+	double lastError = 1000.0; //last iteration error
+	double lastValid = 100000.0;//last validation error
 
-	//initializes best weights
-	vector<vector<double>> bestWeight;
-	double globalBest = 100000;
+	vector<vector<double>> bestWeight; //holds the values for the best iteration's weights
+	double globalBest = 100000; //global best error
+	double globalValid = 100000; //global best validation error
+
 	resetWeight(); //clears the current weight values
 
-	int strikes = 10; //number of times in a row that error can increase
+	int strikes = 10; //number of times in a row that error can increase before stopping
+
+	//loop for each epoch (number of times trained on input)
 	for (int z = 1; strikes > 0 && z < lim && lastError > .000001; z++) {
-		double currentError = 0.0;
+		double currentError = 0.0; //error for this iteration
 
 		//trains each input
 		for (int i = 0; i < input.size(); i++) {
-			currentError += backProp(input[i].first, input[i].second);
+			currentError += backProp(input[i].first, input[i].second); //actually adjusting the weight to minimize the error, adds the error returned by backpropto the current error
 		}
 
-		//updates all the weight
+		//updates all the weights
 		for (int i = 0; i < nodeList.size(); i++) {
 			for (int a = 0; a < nodeList[i].send.size(); a++) {
 				Connection& c = nodeList[i].send[a];
+
+				//nesterov acceleration
 				double g = c.nextWeight / input.size();
 				c.momentum = (c.beta*c.momentum) + ((1 - c.beta)*g);
 				c.velocity = c.betaA*c.velocity + (1 - c.betaA)*pow(g, 2);
-				double vhat = c.velocity / (1 - pow(c.betaA, z)); //z has to start at 1
+				double vhat = c.velocity / (1 - pow(c.betaA, z));
 				double mhat = c.momentum / (1 - pow(c.beta, z));
-				nodeList[i].send[a].setWeight(c.weight - (learningRate / (sqrt(vhat) + c.epsilon)) * (c.beta*mhat + ((1 - c.beta)*g / (1 - pow(c.beta, z)))));
+				nodeList[i].send[a].setWeight(c.weight - (learningRate / (sqrt(vhat) + c.epsilon)) * (c.beta*mhat + ((1 - c.beta)*g / (1 - pow(c.beta, z))))); //actual weight update
 			}
 		}
 
-		errorChange = (currentError - lastError) / lastError;
+		errorChange = (currentError - lastError) / lastError; //percent change in error
 		lastError = currentError;
 
-		//decreases the number of strikes or resets them and changes best weight
-		if (errorChange >= 0) {
+		//gets the error of the validation training set
+		double validError = 0;
+		for (int i = 0; i < valid.size(); i++) {
+			vector<double> val = process(valid[i].first);
+			for (int a = 0; a < valid[i].second.size(); a++) {
+				validError += abs(val[a] - valid[i].second[a]);
+			}
+		}
+
+		//decreases the number of strikes  when the error for the validation or input training set increase or resets them when the error decreases
+		if (validError > lastValid) {
 			strikes--;
 		}
-		else if (currentError < globalBest) {
+		else if (errorChange >= 0) {
+			strikes--;
+		}
+		else if (errorChange < 0) {
+			strikes = 10;
+		}
+
+		//if the validation is the global best then it updates bestWeight and resets the number of strikes
+		if (validError < globalValid) {
 			bestWeight.clear();
 			for (int i = 0; i < nodeList.size(); i++) {
 				vector<double> one;
@@ -172,12 +201,10 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 			strikes = 10;
 
 			globalBest = currentError;
-		}
-		else {
-			strikes = 10;
+			globalValid = validError;
 		}
 
-		//cout << "Error: " << currentError << " change " << errorChange << endl;
+		lastValid = validError;
 	}
 
 	//sets the weights back to the best
@@ -196,8 +223,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, in
 		}
 	}
 
-	fitness = 1 / final;
-	//cout << "final training is " << fitness << endl;
+	fitness = 1 / final; //calculate the fitness
 	return final;
 }
 
@@ -413,9 +439,15 @@ bool Network::checkCircle(Node& n, int goal, int preCheck[])
 	return ans;
 }
 
+/*
+n: Network to clone
+ans: Reference to where n will be cloned to
+innovationDict: Pointer to dictionary that contains connection numbers
+*/
 void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
 {
-	ans = Network(n.input.size() - 1, n.output.size(), n.networkId, n.species, n.learningRate, false, ans.activation, ans.activationDerivative);
+	//resets the ans to to be similar to n
+	ans = Network(n.input.size() - 1, n.output.size(), n.networkId, n.species, n.learningRate, false, n.activation, n.activationDerivative);
 
 	for (int i = n.output.size() + n.input.size(); i < n.nodeList.size(); i++) {
 		ans.createNode(100, n.nodeList[i].activation, n.nodeList[i].activationDerivative);
@@ -423,9 +455,9 @@ void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
 	for (int i = 0; i < n.nodeList.size(); i++) {
 		Node* node = &n.nodeList[i];
 		for (int a = 0; a < n.nodeList[i].send.size(); a++) {
-			ans.mutateConnection((*innovationDict)[node->send[a].innovation].first, (*innovationDict)[node->send[a].innovation].second, node->send[a].innovation, node->send[a].weight);
+			pair<int, int> v = safeRead(*innovationDict, node->send[a].innovation);
+			ans.mutateConnection(v.first, v.second, node->send[a].innovation, node->send[a].weight);
 		}
 	}
-
 	ans.fitness = n.fitness;
 }

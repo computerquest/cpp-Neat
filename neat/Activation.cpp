@@ -2,6 +2,7 @@
 #include <random>
 #include <ctime>
 #include "Activation.h"
+#include <mutex>
 using namespace std;
 
 typedef std::mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
@@ -43,6 +44,60 @@ void randInit() {
 	rng.seed(time(NULL));
 }
 
+activation stringtoAct(string in)
+{
+	if (in == "sig") {
+		return &sigmoid;
+	}
+	else if (in == "lRelu") {
+		return &lRelu;
+	}
+	else if (in == "tanh") {
+		return  &tanh;
+	}
+}
+
+activationDerivative stringtoDeriv(string in)
+{
+	if (in == "sig") {
+		return &sigmoidDerivative;
+	}
+	else if (in == "lRelu") {
+		return &lReluDerivative;
+	}
+	else if (in == "tanh") {
+		return  &tanhDerivative;
+	}
+}
+
+string acttoString(activation activation)
+{
+	string act = "";
+	if (activation == &tanh) { //ignore if error
+		act = "tanh";
+	}
+	else if (activation == &sigmoid) {
+		act = "sig";
+	}
+	else if (activation == &lRelu) {
+		act = "lRelu";
+	}
+
+	return act;
+}
+
+//these are the new add and read methods
+mutex m;
+pair<int, int> safeRead(vector<pair<int, int>>& connectionInnovation, int a) {
+	lock_guard<mutex> fa(m);
+	return connectionInnovation[a];
+}
+int safeWrite(vector<pair<int, int>>& connectionInnovation, int a, int b) {
+	lock_guard<mutex> w(m);
+	connectionInnovation.push_back(pair<int, int>(a, b));
+	return connectionInnovation.size() - 1;
+}
+
 //generates number [f,t]
 int random(int f, int t)
 {
@@ -57,6 +112,5 @@ double random(double f, double t)
 	int b = t * RAND_MAX;
 	std::uniform_int_distribution<int32_t> uint_dist10(a, b);
 
-	return uint_dist10(rng)/(double)RAND_MAX;
+	return uint_dist10(rng) / (double)RAND_MAX;
 }
-
