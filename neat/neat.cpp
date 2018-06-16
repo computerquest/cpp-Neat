@@ -52,7 +52,6 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, vector<
 
 	for (int z = 0; strikes > 0 && bestFit < target; z++) {
 		cout << "//////////////////////////////////////////////////////////////" << endl;
-		cout << "/////////////////////" << endl;
 
 		mateSpecies();
 
@@ -74,9 +73,10 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, vector<
 		//compares the best
 		if (bestIndex != -1) {
 			clone(network[bestIndex], bestNet, &connectionInnovation);
+
 			strikes = cutoff;
 
-			ofstream myfile("bestnet.txt");
+			/*ofstream myfile("bestnet.txt");
 			myfile << bestNet.input.size() - 1 << " " << bestNet.output.size() << " " << acttoString(bestNet.nodeList[0].activation).c_str() << endl;
 			for (int i = 0; i < bestNet.nodeList.size(); i++) {
 				Node& n = bestNet.nodeList[i];
@@ -88,7 +88,7 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, vector<
 				}
 			}
 			myfile.flush();
-			myfile.close();
+			myfile.close();*/
 		}
 		else {
 			strikes--;

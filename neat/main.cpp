@@ -54,11 +54,11 @@ int main()
 
 	randInit();
 
-	Neat neat = Neat(50, 2, 1, .3, .1, &sigmoid, &sigmoidDerivative);
+	Neat neat = Neat(200, 2, 1, .3, .1, &sigmoid, &sigmoidDerivative);
 
 	Network winner;
 	
-	neat.start(data, data, 10, 1000000, winner);
+	neat.start(data, data, 10, 10000000, winner);
 	//neat.printNeat()
 
 	cout << endl;

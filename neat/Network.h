@@ -42,6 +42,8 @@ public:
 	int mutateNode(int from, int to, int innovationA, int innovationB, double(*activation)(double value), double(*activationDerivative)(double value));
 	bool checkCircleMaster(Node& n, int goal);
 	bool checkCircle(Node& n, int goal, int preCheck[]);
+
+	double calcFitness(vector<pair<vector<double>, vector<double>>>& input);
 };
 
 void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict);

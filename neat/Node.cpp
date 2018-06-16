@@ -21,13 +21,15 @@ void Node::recieveValue()
 {
 	inputRecieved++;
 
-	double sum = 0;
-	for (int i = 0; i < recieve.size(); i++) {
-		sum += (recieve[i]->nodeFrom->value) * recieve[i]->weight;
-	}
+	if (inputRecieved == recieve.size()) {
+		double sum = 0;
+		for (int i = 0; i < recieve.size(); i++) {
+			sum += (recieve[i]->nodeFrom->value) * recieve[i]->weight;
+		}
 
-	setValue(sum);
-	inputRecieved = 0;
+		setValue(sum);
+		inputRecieved = 0;
+	}
 }
 
 void Node::recieveInfluence()
@@ -81,7 +83,12 @@ bool Node::connectsTo(int id)
 
 void Node::setValue(double a)
 {
-	value = activation(a);
+	if (recieve.size() > 0) {
+		value = activation(a);
+	}
+	else {
+		value = a;
+	}
 
 	for (int i = 0; i < send.size(); i++) {
 		send[i].notifyValue();

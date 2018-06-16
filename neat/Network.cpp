@@ -79,8 +79,8 @@ void Network::printNetwork()
 
 vector<double> Network::process(vector<double>& input) {
 	//set input values
-	for (int i = 0; i < input.size(); i++) {
-		if (i < this->input.size()) {
+	for (int i = 0; i < this->input.size(); i++) {
+		if (i < input.size()) {
 			this->input[i]->setValue(input[i]);
 		}
 		else {
@@ -460,4 +460,19 @@ void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
 		}
 	}
 	ans.fitness = n.fitness;
+}
+
+double Network::calcFitness(vector<pair<vector<double>, vector<double>>>& input)
+{
+	//calculate the final error
+	double final = 0.0;
+	for (int i = 0; i < input.size(); i++) {
+		vector<double> stuff = process(input[i].first);
+		for (int a = 0; a < stuff.size(); a++) {
+			final += abs(stuff[a] - input[i].second[a]);
+		}
+	}
+
+	fitness = 1 / final; //calculate the fitness
+	return fitness;
 }
