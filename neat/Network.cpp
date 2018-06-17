@@ -126,27 +126,26 @@ input: the training examples
 valid: the validation examples
 lim: the maximum number of iterations
 */
-double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid, int lim)
+double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vector<pair<vector<double>, vector<double>>>& valid, int lim)
 {
 	double errorChange = -1000.0; //percent of error change
 	double lastError = 1000.0; //last iteration error
-	double lastValid = 100000.0;//last validation error
+	double trendError = 1000;
 
 	vector<vector<double>> bestWeight; //holds the values for the best iteration's weights
 	double globalBest = 100000; //global best error
-	double globalValid = 100000; //global best validation error
 
 	resetWeight(); //clears the current weight values
 
 	int strikes = 10; //number of times in a row that error can increase before stopping
 
-	//loop for each epoch (number of times trained on input)
+					  //loop for each epoch (number of times trained on input)
 	for (int z = 1; strikes > 0 && z < lim && lastError > .000001; z++) {
 		double currentError = 0.0; //error for this iteration
 
-		//trains each input
-		for (int i = 0; i < input.size(); i++) {
-			currentError += backProp(input[i].first, input[i].second); //actually adjusting the weight to minimize the error, adds the error returned by backpropto the current error
+								   //trains each input
+		for (int i = 0; i < test.size(); i++) {
+			currentError += backProp(test[i].first, test[i].second); //actually adjusting the weight to minimize the error, adds the error returned by backpropto the current error
 		}
 
 		//updates all the weights
@@ -155,7 +154,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, ve
 				Connection& c = nodeList[i].send[a];
 
 				//nesterov acceleration
-				double g = c.nextWeight / input.size();
+				double g = c.nextWeight / test.size();
 				c.momentum = (c.beta*c.momentum) + ((1 - c.beta)*g);
 				c.velocity = c.betaA*c.velocity + (1 - c.betaA)*pow(g, 2);
 				double vhat = c.velocity / (1 - pow(c.betaA, z));
@@ -167,20 +166,14 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, ve
 		errorChange = (currentError - lastError) / lastError; //percent change in error
 		lastError = currentError;
 
-		//gets the error of the validation training set
-		double validError = 0;
-		for (int i = 0; i < valid.size(); i++) {
-			vector<double> val = process(valid[i].first);
-			for (int a = 0; a < valid[i].second.size(); a++) {
-				validError += abs(val[a] - valid[i].second[a]);
-			}
+		if ((z - 1) % 500 == 0 && currentError / trendError > .9) {
+			break;
+		}
+		else if ((z - 1) % 500 == 0) {
+			trendError = currentError;
 		}
 
-		//decreases the number of strikes  when the error for the validation or input training set increase or resets them when the error decreases
-		if (validError > lastValid) {
-			strikes--;
-		}
-		else if (errorChange >= 0) {
+		if (errorChange >= 0) {
 			strikes--;
 		}
 		else if (errorChange < 0) {
@@ -188,7 +181,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, ve
 		}
 
 		//if the validation is the global best then it updates bestWeight and resets the number of strikes
-		if (validError < globalValid) {
+		if (currentError < globalBest) {
 			bestWeight.clear();
 			for (int i = 0; i < nodeList.size(); i++) {
 				vector<double> one;
@@ -201,10 +194,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, ve
 			strikes = 10;
 
 			globalBest = currentError;
-			globalValid = validError;
 		}
-
-		lastValid = validError;
 	}
 
 	//sets the weights back to the best
@@ -214,17 +204,9 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& input, ve
 		}
 	}
 
-	//calculate the final error
-	double final = 0.0;
-	for (int i = 0; i < input.size(); i++) {
-		vector<double> stuff = process(input[i].first);
-		for (int a = 0; a < stuff.size(); a++) {
-			final += abs(stuff[a] - input[i].second[a]);
-		}
-	}
+	calcFitness(test);
 
-	fitness = 1 / final; //calculate the fitness
-	return final;
+	return 1 / fitness;
 }
 
 int Network::getInnovation(int pos)
@@ -282,38 +264,14 @@ int Network::numConnection()
 
 void Network::resetWeight()
 {
-	int numIn = -1;
-	int numOut = -1;
-
-	vector<Node*> currentNodes;
-	for (int i = 0; i < input.size(); i++) {
-		currentNodes.push_back(input[i]);
-	}
-
-	while (numOut != 0) {
-		numIn = currentNodes.size();
-		numOut = 0;
-		vector<Node*> secondary;
-
-		for (int i = 0; i < currentNodes.size(); i++) {
-			numOut += currentNodes[i]->send.size();
-			for (int a = 0; a < currentNodes[i]->send.size(); a++) {
-				secondary.push_back(currentNodes[i]->send[a].nodeTo);
-			}
+	for (int i = 0; i < nodeList.size(); i++) {
+		double value = 2 / (double)(nodeList[i].send.size() + nodeList[i].recieve.size());
+		for (int a = 0; a < nodeList[i].send.size(); a++) {
+			nodeList[i].send[a].weight = random(-value, value);
+			nodeList[i].send[a].nextWeight = 0;;
+			nodeList[i].send[a].momentum = 0;
+			nodeList[i].send[a].velocity = 0;
 		}
-
-		double value = 2 / (double)(numIn + numOut);
-
-		for (int i = 0; i < currentNodes.size(); i++) {
-			for (int a = 0; a < currentNodes[i]->send.size(); a++) {
-				currentNodes[i]->send[a].weight = random(0 - value, value);
-				currentNodes[i]->send[a].nextWeight = 0;;
-				currentNodes[i]->send[a].momentum = 0;
-				currentNodes[i]->send[a].velocity = 0;
-			}
-		}
-
-		currentNodes = secondary;
 	}
 }
 

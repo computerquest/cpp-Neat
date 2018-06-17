@@ -17,7 +17,7 @@ public:
 
 	Neat(int numNetworks, int input, int output, double mutate, double lr, double(*activation)(double value), double(*activationDerivative)(double value));
 
-	Network start(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid, int cutoff, double target, Network& betNet); //returning network will not work
+	vector<double> start(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid, int cutoff, double target, Network& betNet); //returning network will not work
 	void printNeat();
 	void mutatePopulation();
 

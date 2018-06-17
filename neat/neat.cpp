@@ -37,21 +37,22 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr, dou
 	}
 
 	mutatePopulation();
-	mutatePopulation();
-	mutatePopulation();
 
 	speciateAll();
 }
 
-Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid, int cutoff, double target, Network& bestNet)
+vector<double> Neat::start(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid, int cutoff, double target, Network& bestNet)
 {
+	vector<double> ans;
 	int strikes = cutoff;
 	double bestFit = 0;
 
 	trainNetworks(input, valid);
 
-	for (int z = 0; strikes > 0 && bestFit < target; z++) {
-		cout << "//////////////////////////////////////////////////////////////" << endl;
+	int z = 0;
+	int extra = 10;
+	while (strikes > 0 && extra >= 1) {
+		//cout << "//////////////////////////////////////////////////////////////" << endl;
 
 		mateSpecies();
 
@@ -73,22 +74,14 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, vector<
 		//compares the best
 		if (bestIndex != -1) {
 			clone(network[bestIndex], bestNet, &connectionInnovation);
-
+			/*int bF = bestNet.calcFitness(input);
+			int bfa = bestNet.calcFitness(input);
+			int bfb = bestNet.calcFitness(input);
+			int fit = network[bestIndex].calcFitness(input);
+			if (bF != fit || ((int)bestNet.fitness) != fit) {
+			cout << "shit" << endl;
+			}*/
 			strikes = cutoff;
-
-			/*ofstream myfile("bestnet.txt");
-			myfile << bestNet.input.size() - 1 << " " << bestNet.output.size() << " " << acttoString(bestNet.nodeList[0].activation).c_str() << endl;
-			for (int i = 0; i < bestNet.nodeList.size(); i++) {
-				Node& n = bestNet.nodeList[i];
-				myfile << n.id << " " << acttoString(n.activation).c_str() << endl;
-			}
-			for (int i = 0; i < bestNet.nodeList.size(); i++) {
-				for (int a = 0; a < bestNet.nodeList[i].send.size(); a++) {
-					myfile << bestNet.nodeList[i].id << " " << bestNet.nodeList[i].send[a].nodeTo->id << " " << bestNet.nodeList[i].send[a].weight << endl;
-				}
-			}
-			myfile.flush();
-			myfile.close();*/
 		}
 		else {
 			strikes--;
@@ -98,46 +91,68 @@ Network Neat::start(vector<pair<vector<double>, vector<double>>>& input, vector<
 			}
 		}
 
-		cout << "best" << endl;
+		/*cout << "best" << endl;
 		bestNet.printNetwork();
 		cout << "epoch:" << z << " best: " << bestFit << endl;
-		cout << endl;
+		cout << endl;*/
+		z++;
+
+		if (bestFit > target) {
+			if (extra == 5) {
+				ans.push_back(bestFit);
+			}
+			extra--;
+		}
 	}
 
-	return bestNet;
+	ans.push_back(z);
+
+	if (ans.size() < 2) {
+		ans.push_back(-z);
+	}
+
+	return ans;
 }
+
 
 void Neat::mutatePopulation()
 {
-	int numNet = random(3, network.size() / 5 + 3); // rand() % ((network.size() - 3) / 5) + 3;
-	for (int i = 0; i < numNet; i++) {
-		int species = random(0, this->species.size() - 1); // int(rand() % (this->species.size()));
-
-		this->species[species].mutateNetwork(this->species[species].getNetworkAt(random(0, this->species[species].network.size() - 1)));//rand() % this->species[species].network.size()));
+	for (int i = 0; i < species.size(); i++) {
+		for (int a = 0; a < species[i].network.size(); a++) {
+			species[i].mutateNetwork(*species[i].network[a]);
+		}
 	}
 }
 
 void Neat::trainNetworks(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid)
 {
-	threads.clear();
+	/*threads.clear();
 	for (int i = 0; i < species.size(); i++) {
 		threads.push_back(thread(&Species::trainNetworks, &species[i], input, valid));
 	}
 
 	for (int i = 0; i < threads.size(); i++) {
 		threads[i].join();
+	}*/
+
+	for (int i = 0; i < species.size(); i++) {
+		species[i].trainNetworks(input, input);
 	}
 }
 
 void Neat::mateSpecies()
 {
-	threads.clear();
+	/*threads.clear();
 
 	for (int i = 0; i < species.size(); i++) {
 		threads.push_back(thread(&Species::mateSpecies, &species[i]));
 	}
 	for (int i = 0; i < threads.size(); i++) {
 		threads[i].join();
+	}*/
+
+	for (int i = 0; i < species.size(); i++) {
+		species[i].mateSpecies();
 	}
 }
 
@@ -246,8 +261,7 @@ void Neat::speciate(Network& network, Species* s)
 		if (newSpec.network.size() < 2) {
 			//reassign creator to next best in order to prevent a loop
 			//newSpec.removeNetwork(network.networkId);
-			if (s != nullptr) {
-			}
+
 			getSpecies(bestSpec).addNetwork(network); //could be problem because index changes when make new species (maybe because should be added to the end)
 			removeSpecies(newSpec.id);
 
@@ -298,7 +312,7 @@ double Neat::compareGenome(int node, vector<int>& innovation, int nodeA, vector<
 	}
 
 	//calculates the final double for similarity
-	return (missing / (double)larger->size()) + (abs(node - nodeA) / (double)(node + nodeA) / 2);
+	return (missing / (double)larger->size()) + 3*(abs(node - nodeA) / (double)(node + nodeA) / 2);
 }
 
 /*mutex writing;
@@ -364,7 +378,7 @@ Species& Neat::createSpecies(vector<Network*>& possible)
 		possible[i]->species = speciesId;
 	}
 
-	species.push_back(Species(speciesId, possible, nodeMutate));
+	species.push_back(Species(speciesId, possible, &connectionInnovation, nodeMutate));
 
 	speciesId++;
 
@@ -379,7 +393,7 @@ Species & Neat::createSpecies(int startIndex, int endIndex)
 		possible.push_back(&network[i]);
 	}
 
-	species.push_back(Species(speciesId, possible, nodeMutate));
+	species.push_back(Species(speciesId, possible, &connectionInnovation, nodeMutate));
 
 	speciesId++;
 
