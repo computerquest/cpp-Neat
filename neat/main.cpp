@@ -1,62 +1,49 @@
 #include "stdafx.h"
+#include <string>
 #include <iostream>
 #include "Neat.h"
-#include "Activation.h"
 #include <fstream>
-#include <string>
+#include "Activation.h"
 #include <chrono>
-#include <sstream>
 #include <mutex>
+#include <sstream>
 using namespace std;
 using namespace chrono;
 
-void split(const std::string &s, char delim, vector<string> &result) {
-	stringstream ss(s);
-	string item;
-	while (getline(ss, item, delim)) {
-		result.push_back(item);
-	}
-}
-void readNets(string file, vector<Network>& allNets) {
-	ifstream net(file);
-	string line = "";
-	bool newNet = true;
-	for (int i = 0; getline(net, line); i++) {
-		if (line == "" & !newNet) {
-			newNet = true;
-		}
-		else {
-			vector<string> in;
-			split(line, ' ', in);
-			if (newNet) {
-				allNets.push_back(Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2])));
-				allNets.back().fitness = stod(in[3]);
-				cout << fixed << stod(in[3]) << endl;
-				newNet = false;
-			}
-			else if (in.size() == 3) {
-				allNets.back().mutateConnection(stoi(in[0]), stoi(in[1]), 0, stod(in[2]));
-			}
-			else if (in.size() == 2) {
-				if (stoi(in[0]) < allNets.back().input.size() + allNets.back().output.size()) {
-					continue;
-				}
-				allNets.back().createNode(100, stringtoAct(in[1]), stringtoDeriv(in[1]));
-				allNets.back().nodeList.back().id = stoi(in[0]);
-			}
-		}
-	}
+
+ofstream rawData;
+ofstream bestNetworks;
+int desiredFitness = 1000000;
+int populationSize = 24;
+int z = 0;
+vector<Network> allNets;
+
+mutex j;
+void write(Network& winner) {
+	j.lock();
+
+	bestNetworks.open("verification.txt", fstream::app);
+	bestNetworks << winner.fitness << endl;
+
+	bestNetworks.flush();
+	bestNetworks.close();
+
+	j.unlock();
 }
 
 mutex mainMutex;
-void write(Network& winner, string file) {
+void write(vector<double> epochs, Network& winner, int time) {
 	mainMutex.lock();
+	z++;
+	cout << "finished " << z << endl;
+	rawData.open("testResults.txt", fstream::app);
+	bestNetworks.open("bestNets.txt", fstream::app);
 
-	ofstream bestNetworks;
-	bestNetworks.open(file);
+	rawData << populationSize << " " << desiredFitness << " " << epochs[0] << " " << winner.fitness << " " << int(epochs[1]) << " " << time << endl;
+	rawData.flush();
+	rawData.close();
 
 	bestNetworks << winner.input.size() - 1 << " " << winner.output.size() << " " << acttoString(winner.nodeList[0].activation).c_str() << " " << winner.fitness << " " << int(epochs[1]) << endl;
-	
 	for (int i = 0; i < winner.nodeList.size(); i++) {
 		Node& n = winner.nodeList[i];
 		bestNetworks << n.id << " " << acttoString(n.activation).c_str() << endl;
@@ -66,14 +53,55 @@ void write(Network& winner, string file) {
 			bestNetworks << winner.nodeList[i].id << " " << winner.nodeList[i].send[a].nodeTo->id << " " << winner.nodeList[i].send[a].weight << endl;
 		}
 	}
-
 	bestNetworks << endl;
 	bestNetworks.flush();
 	bestNetworks.close();
 
 	mainMutex.unlock();
 }
+void runSample(vector<pair<vector<double>, vector<double>>>& data, int numTime) {
+	for (int a = 1; a < numTime; a++) {
+		//cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << populationSize << " <<<<<<<<<<<>>>>>>>>>>>>> " << desiredFitness << " : " << a << endl;
+		Neat neat = Neat(populationSize, 2, 1, .3, .1, &sigmoid, &sigmoidDerivative);
 
+		Network winner;
+
+		milliseconds ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch());
+		vector<double> epochs = neat.start(data, data, 10, desiredFitness, winner);
+		milliseconds finalTime = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()) - ms;
+
+		//cout << endl;
+
+		//cout << "best " << winner.fitness << " error " << 1 / winner.fitness << endl;
+		//cout << "result: " << winner.process(data[0].first)[0] << " vs " << to_string(data[0].second[0]) << " " << winner.process(data[1].first)[0] << " vs " << to_string(data[1].second[0]) << " " << winner.process(data[2].first)[0] << " vs " << to_string(data[2].second[0]) << " " << winner.process(data[3].first)[0] << " vs " << to_string(data[3].second[0]) << endl; //1 1 0 0
+
+		write(epochs, winner, finalTime.count());
+	}
+}
+void split(const std::string &s, char delim, vector<string> &result) {
+	stringstream ss(s);
+	string item;
+	while (getline(ss, item, delim)) {
+		result.push_back(item);
+	}
+}
+
+mutex r;
+void runTrial(vector<pair<vector<double>, vector<double>>>& data, int start, int end) {
+	while (start < end) {
+		Network& net = allNets[start];
+
+		int bFit = net.fitness;
+		int aFit = net.calcFitness(data);
+		if (bFit != aFit) {
+			r.lock();
+			cout << bFit << " vs real " << aFit << endl;
+			r.unlock();
+		}
+		write(net);
+		start++;
+	}
+}
 int main()
 {
 	vector<pair<vector<double>, vector<double>>> data;
@@ -124,18 +152,68 @@ int main()
 
 	randInit();
 
-	Neat neat = Neat(200, 2, 1, .3, .1, &sigmoid, &sigmoidDerivative);
+	desiredFitness = 1000000;
+	{
+		cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << populationSize << " <<<<<<<<<<<>>>>>>>>>>>>> " << desiredFitness << endl;
+		vector<thread> threads;
 
-	Network winner;
-	
-	neat.start(data, data, 10, 10000000, winner);
-	//neat.printNeat()
+		for (int i = 0; i < 4; i++) {
+			threads.push_back(thread(runSample, data, 250));
+		}
 
-	cout << endl;
+		cout << "threads launched" << endl;
+		for (int i = 0; i < threads.size(); i++) {
+			threads[i].join();
+			cout << "thread: " << i << " is finished" << endl;
+		}
+	}
 
-	//printNetwork(&winner);
-	cout << "best " << winner.fitness << " error " << 1 / winner.fitness << endl;
-	cout << "result: " << winner.process(data[0].first)[0] << " " << winner.process(data[1].first)[0] << " " << winner.process(data[2].first)[0] << " " << winner.process(data[3].first)[0] << endl; //1 1 0 0
+	/*ifstream net("bestNets.txt");
+	string line = "";
+	bool newNet = true;
+	for (int i = 0; getline(net, line); i++) {
+	if (line == "" & !newNet) {
+	newNet = true;
+	}
+	else {
+	vector<string> in;
+	split(line, ' ', in);
+	if (newNet) {
+	allNets.push_back(Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2])));
+	allNets.back().fitness = stod(in[3]);
+	cout << fixed << stod(in[3]) << endl;
+	newNet = false;
+	}
+	else if (in.size() == 3) {
+	allNets.back().mutateConnection(stoi(in[0]), stoi(in[1]), 0, stod(in[2]));
+	}
+	else if (in.size() == 2) {
+	if (stoi(in[0]) < allNets.back().input.size() + allNets.back().output.size()) {
+	continue;
+	}
+	allNets.back().createNode(100, stringtoAct(in[1]), stringtoDeriv(in[1]));
+	allNets.back().nodeList.back().id = stoi(in[0]);
+	allNets.back().hidden.push_back(&allNets.back().nodeList.back());
+	}
+	}
+	}
+
+	cout << "num nets " << allNets.size() << endl;
+
+	vector<thread> threads;
+	threads.push_back(thread(runTrial, data, 0, int(allNets.size() / 8) + (allNets.size() % 8)));
+	int lastIndex = int(allNets.size() / 8) + (allNets.size() % 8);
+	for (int i = 0; i < 7; i++) {
+	threads.push_back(thread(runTrial, data, lastIndex, (lastIndex + int(allNets.size() / 8))));
+	cout << "launching " << lastIndex << " " << lastIndex + int(allNets.size() / 8) << endl;
+	lastIndex = lastIndex + int(allNets.size() / 8);
+	}
+
+	cout << "threads launched" << endl;
+	for (int i = 0; i < threads.size(); i++) {
+	threads[i].join();
+	cout << "thread: " << i << " is finished" << endl;
+	}*/
 	cout << "done";
 	system("pause");
 	return 0;

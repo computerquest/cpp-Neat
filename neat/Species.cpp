@@ -8,10 +8,8 @@
 #include <mutex>
 using namespace std;
 
-vector<pair<int, int>>* Species::innovationDict;
-
-Species::Species(int id, vector<Network*> networks, double mutate)
-{
+Species::Species(int id, vector<Network*> networks, vector<pair<int, int>>* innov, double mutate) {
+	innovationDict = innov;
 	this->id = id;
 	this->mutate = mutate;
 	this->network = networks;
