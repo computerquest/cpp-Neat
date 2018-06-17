@@ -144,7 +144,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 	int strikes = 100; //number of times in a row that error can increase before stopping
 
 					  //loop for each epoch (number of times trained on input)
-	for (int z = 1; true; z++) {
+	for (int z = 1; strikes > 0 && z < lim && lastError > .000001; z++) {
 		double currentError = 0.0; //error for this iteration
 
 								   //trains each input
@@ -171,7 +171,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 		lastError = currentError;
 
 		if ((z - 1) % 500 == 0 && currentError / trendError > .9) {
-			//break;
+			break;
 		}
 		else if ((z - 1) % 500 == 0) {
 			trendError = currentError;
@@ -186,22 +186,6 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 
 		//if the validation is the global best then it updates bestWeight and resets the number of strikes
 		if (currentError < globalBest) {
-			ofstream bestNetworks;
-			bestNetworks.open("verification"+to_string(networkId)+".txt");
-			bestNetworks << input.size() - 1 << " " << output.size() << " " << acttoString(nodeList[0].activation).c_str() << " " << (1/currentError) << " " << z << endl;
-			for (int i = 0; i < nodeList.size(); i++) {
-				Node& n = nodeList[i];
-				bestNetworks << n.id << " " << acttoString(n.activation).c_str() << endl;
-			}
-			for (int i = 0; i < nodeList.size(); i++) {
-				for (int a = 0; a < nodeList[i].send.size(); a++) {
-					bestNetworks << nodeList[i].id << " " << nodeList[i].send[a].nodeTo->id << " " << nodeList[i].send[a].weight << endl;
-				}
-			}
-			bestNetworks << endl;
-			bestNetworks.flush();
-			bestNetworks.close();
-
 			bestWeight.clear();
 			for (int i = 0; i < nodeList.size(); i++) {
 				vector<double> one;
