@@ -14,7 +14,7 @@ using namespace chrono;
 ofstream rawData;
 ofstream bestNetworks;
 int desiredFitness = 1000000;
-int populationSize = 24;
+int populationSize = 3;
 int z = 0;
 vector<Network> allNets;
 
@@ -157,8 +157,8 @@ int main()
 		cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << populationSize << " <<<<<<<<<<<>>>>>>>>>>>>> " << desiredFitness << endl;
 		vector<thread> threads;
 
-		for (int i = 0; i < 4; i++) {
-			threads.push_back(thread(runSample, data, 250));
+		for (int i = 0; i < 8; i++) {
+			threads.push_back(thread(runSample, data, 125));
 		}
 
 		cout << "threads launched" << endl;
