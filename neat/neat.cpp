@@ -30,10 +30,10 @@ Neat::Neat(int numNetworks, int input, int output, double mutate, double lr, dou
 		network.push_back(Network(input, output, i, 0, lr, true, activation, activationDerivative));
 	}
 
-	createSpecies(0, network.size() % 5 + network.size() / 5);
+	createSpecies(0, network.size() % 3 + network.size() / 3);
 	species[0].innovationDict = &connectionInnovation;
-	for (int i = network.size() % 5 + (network.size() / 5); i + (network.size() / 5) <= network.size(); i += (network.size() / 5)) {
-		createSpecies(i, i + (network.size() / 5));
+	for (int i = network.size() % 3 + (network.size() / 3); i + (network.size() / 3) <= network.size(); i += (network.size() / 3)) {
+		createSpecies(i, i + (network.size() / 3));
 	}
 
 	mutatePopulation();
