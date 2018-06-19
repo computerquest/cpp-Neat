@@ -304,21 +304,19 @@ void Species::mateNetwork(vector<Node>& nB, vector<Node>& nA, bool bBetter, Netw
 	//add nA innovation
 	for (int i = 0; i < numNode->size(); i++) {
 		for (int a = 0; a < (*numNode)[i].send.size(); a++) {
-			pair<int, int> ina = safeRead(*innovationDict, (*numNode)[i].send[a].innovation);
-			ans.mutateConnection(ina.first, ina.second, (*numNode)[i].send[a].innovation);
+			ans.mutateConnection((*numNode)[i].id, (*numNode)[i].send[a].nodeTo->id, 0);
 		}
 	}
 
 	//add unique (*l) innovation
 	for (int i = 0; i < l->size(); i++) {
 		for (int a = 0; a < (*l)[i].send.size(); a++) {
-			pair<int, int> inb = safeRead(*innovationDict, (*l)[i].send[a].innovation);
-			int firstNode = inb.first;
-			int secondNode = inb.second;
+			int firstNode = (*l)[i].id;
+			int secondNode = (*l)[i].send[a].nodeTo->id;
 
 			//checks to make sure their is no conflict in possible innovations
 			if (!(ans.containsInnovation((*l)[i].send[a].innovation) || ans.getNode(firstNode).connectsTo(secondNode) || ans.getNode(secondNode).connectsTo(firstNode) || ans.checkCircleMaster(ans.getNode(firstNode), secondNode))) {
-				ans.mutateConnection(firstNode, secondNode, (*l)[i].send[a].innovation);
+				ans.mutateConnection(firstNode, secondNode, 0);
 			}
 		}
 	}
