@@ -23,11 +23,18 @@ void write(Network& winner) {
 	j.lock();
 
 	bestNetworks.open("verification.txt", fstream::app);
-	bestNetworks << winner.fitness << endl;
+	int sumCon = 0;
+	for (int i = 0; i < winner.nodeList.size(); i++) {
+		sumCon += winner.nodeList[i].send.size();
+	}
+
+	cout << "finished " << z << endl;
+	bestNetworks <<  winner.nodeList.size() << " " << sumCon << endl;
 
 	bestNetworks.flush();
 	bestNetworks.close();
 
+	z++;
 	j.unlock();
 }
 
@@ -86,18 +93,15 @@ void split(const std::string &s, char delim, vector<string> &result) {
 	}
 }
 
+Species s;
+
 mutex r;
-void runTrial(vector<pair<vector<double>, vector<double>>>& data, int start, int end) {
+void runTrial(Network& a, int start, int end) {
 	while (start < end) {
 		Network& net = allNets[start];
 
-		int bFit = net.fitness;
-		int aFit = net.calcFitness(data);
-		if (bFit != aFit) {
-			r.lock();
-			cout << bFit << " vs real " << aFit << endl;
-			r.unlock();
-		}
+		Network n;
+		s.mateNetwork(a.nodeList, net.nodeList, net.fitness > a.fitness, n);
 		write(net);
 		start++;
 	}
@@ -153,7 +157,7 @@ int main()
 
 	randInit();
 
-	desiredFitness = 1000000;
+	/*desiredFitness = 1000000;
 	{
 		cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << populationSize << " <<<<<<<<<<<>>>>>>>>>>>>> " << desiredFitness << endl;
 		vector<thread> threads;
@@ -167,54 +171,51 @@ int main()
 			threads[i].join();
 			cout << "thread: " << i << " is finished" << endl;
 		}
-	}
+	}*/
 
-	/*ifstream net("bestNets.txt");
+	ifstream net("bestNets.txt");
 	string line = "";
 	bool newNet = true;
 	for (int i = 0; getline(net, line); i++) {
-	if (line == "" & !newNet) {
-	newNet = true;
-	}
-	else {
-	vector<string> in;
-	split(line, ' ', in);
-	if (newNet) {
-	allNets.push_back(Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2])));
-	allNets.back().fitness = stod(in[3]);
-	cout << fixed << stod(in[3]) << endl;
-	newNet = false;
-	}
-	else if (in.size() == 3) {
-	allNets.back().mutateConnection(stoi(in[0]), stoi(in[1]), 0, stod(in[2]));
-	}
-	else if (in.size() == 2) {
-	if (stoi(in[0]) < allNets.back().input.size() + allNets.back().output.size()) {
-	continue;
-	}
-	allNets.back().createNode(100, stringtoAct(in[1]), stringtoDeriv(in[1]));
-	allNets.back().nodeList.back().id = stoi(in[0]);
-	allNets.back().hidden.push_back(&allNets.back().nodeList.back());
-	}
-	}
+		if (line == "" & !newNet) {
+			newNet = true;
+		}
+		else {
+			vector<string> in;
+			split(line, ' ', in);
+			if (newNet) {
+				allNets.push_back(Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2])));
+				allNets.back().fitness = stod(in[3]);
+				cout << fixed << stod(in[3]) << endl;
+				newNet = false;
+			}
+			else if (in.size() == 3) {
+				allNets.back().mutateConnection(stoi(in[0]), stoi(in[1]), 0, stod(in[2]));
+			}
+			else if (in.size() == 2) {
+				if (stoi(in[0]) < allNets.back().input.size() + allNets.back().output.size()) {
+					continue;
+				}
+				allNets.back().createNode(100, stringtoAct(in[1]), stringtoDeriv(in[1]));
+				allNets.back().nodeList.back().id = stoi(in[0]);
+			}
+		}
 	}
 
 	cout << "num nets " << allNets.size() << endl;
+	s.network.push_back(&allNets[0]);
 
 	vector<thread> threads;
-	threads.push_back(thread(runTrial, data, 0, int(allNets.size() / 8) + (allNets.size() % 8)));
-	int lastIndex = int(allNets.size() / 8) + (allNets.size() % 8);
 	for (int i = 0; i < 7; i++) {
-	threads.push_back(thread(runTrial, data, lastIndex, (lastIndex + int(allNets.size() / 8))));
-	cout << "launching " << lastIndex << " " << lastIndex + int(allNets.size() / 8) << endl;
-	lastIndex = lastIndex + int(allNets.size() / 8);
+		threads.push_back(thread(runTrial, allNets[i], int(i+1), int(allNets.size()-i-1)));
 	}
 
 	cout << "threads launched" << endl;
 	for (int i = 0; i < threads.size(); i++) {
-	threads[i].join();
-	cout << "thread: " << i << " is finished" << endl;
-	}*/
+		threads[i].join();
+		cout << "thread: " << i << " is finished" << endl;
+	}
+
 	cout << "done";
 	system("pause");
 	return 0;
