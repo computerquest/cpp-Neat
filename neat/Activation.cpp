@@ -3,14 +3,13 @@
 #include <ctime>
 #include "Activation.h"
 #include <mutex>
-using namespace std;
 
 typedef std::mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
 uint32_t seed_val;           // populate somehow
 
 MyRNG rng;                   // e.g. keep one global instance (per thread)
 
-double tanh(double value) {
+double tanH(double value) {
 	return (pow(2.71, value) - pow(2.71, -1 * value)) / (pow(2.71, value) + pow(2.71, -1 * value));
 }
 double tanhDerivative(double value) {
@@ -53,7 +52,7 @@ activation stringtoAct(string in)
 		return &lRelu;
 	}
 	else if (in == "tanh") {
-		return  &tanh;
+		return  &tanH;
 	}
 }
 
@@ -73,7 +72,7 @@ activationDerivative stringtoDeriv(string in)
 string acttoString(activation activation)
 {
 	string act = "";
-	if (activation == &tanh) { //ignore if error
+	if (activation == &tanH) { //ignore if error
 		act = "tanh";
 	}
 	else if (activation == &sigmoid) {

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+
 #include "Species.h"
 #include <algorithm>
 #include <ctime> //for time function
@@ -227,7 +227,7 @@ void Species::mutateNetwork(Network& network)
 			Node& n = network.nodeList[random(startNodeRange, nodeRange - 1)];
 
 			if (i <= 3) {
-				n.activation = &tanh;
+				n.activation = &tanH;
 				n.activationDerivative = &tanhDerivative;
 			}
 			else if (i <= 6) {
@@ -274,11 +274,14 @@ void Species::mutateNetwork(Network& network)
 	}
 }
 
-void Species::mateNetwork(vector<Node>& nB, vector<Node>& nA, bool bBetter, Network& ans)
+void Species::mateNetwork(Network& netB, Network netA, Network& ans)
 {
+    bool bBetter = netB.fitness > netA.fitness;
+    vector<Node>& nB = netB.nodeList;
+    vector<Node>& nA = netA.nodeList;
 	int in = network[0]->input.size() - 1;
 	int out = network[0]->output.size();
-	ans = Network(in, out, -1, id, network[0]->learningRate, false, ans.activation, ans.activationDerivative);
+	ans = Network(in, out, -1, id, network[0]->learningRate, false, netB.activation, netB.activationDerivative);
 
 	vector<Node>* numNode;
 	vector<Node>* l;
@@ -331,76 +334,81 @@ void Species::trainNetworks(vector<pair<vector<double>, vector<double>>>& traini
 
 void Species::mateSpecies()
 {
-	adjustFitness();
+    adjustFitness();
+    //sorts by adjusted fitness
+    vector<Network*> sortedNetwork;
+    sortedNetwork.reserve((network.size() * 85 / 100));
+    double lastValue = 1000.0;
+    double sumFitness = 0.0;
+    for (int i = 0; i < sortedNetwork.capacity(); i++) {
+        double localMax = 0.0;
+        int localIndex = 0;
+        for (int a = 0; a < network.size(); a++) {
+            if (getNetworkAt(a).adjustedFitness > localMax && getNetworkAt(a).adjustedFitness <= lastValue) {
+                bool good = true;
+                for (int b = i - 1; b >= 0; b--) {
+                    if (getNetworkAt(a).networkId == sortedNetwork[b]->networkId) {
+                        good = false;
+                        break;
+                    }
 
-	//sorts by adjusted fitness
-	vector<Network*> sortedNetwork;
-	sortedNetwork.reserve((network.size() * 85 / 100));
-	double lastValue = 1000.0;
-	double sumFitness = 0.0;
-	for (int i = 0; i < sortedNetwork.capacity(); i++) {
-		double localMax = 0.0;
-		int localIndex = 0;
-		for (int a = 0; a < network.size(); a++) {
-			if (getNetworkAt(a).adjustedFitness > localMax && getNetworkAt(a).adjustedFitness <= lastValue) {
-				bool good = true;
-				for (int b = i - 1; b >= 0; b--) {
-					if (getNetworkAt(a).networkId == sortedNetwork[b]->networkId) {
-						good = false;
-						break;
-					}
+                    if (sortedNetwork[b]->adjustedFitness != getNetworkAt(a).adjustedFitness) {
+                        break;
+                    }
+                }
 
-					if (sortedNetwork[b]->adjustedFitness != getNetworkAt(a).adjustedFitness) {
-						break;
-					}
-				}
+                if (good) {
+                    localMax = network[a]->adjustedFitness;
+                    localIndex = a;
+                }
+            }
+        }
 
-				if (good) {
-					localMax = network[a]->adjustedFitness;
-					localIndex = a;
-				}
-			}
-		}
+        sortedNetwork.push_back(&getNetworkAt(localIndex));
+        sumFitness += sortedNetwork[i]->adjustedFitness;
+        lastValue = sortedNetwork[i]->adjustedFitness;
+    }
 
-		sortedNetwork.push_back(&getNetworkAt(localIndex));
-		sumFitness += sortedNetwork[i]->adjustedFitness;
-		lastValue = sortedNetwork[i]->adjustedFitness;
-	}
+    vector<Network> newNets;
 
-	int count = 0;
-	//mates networks
-	for (int i = 0; i < sortedNetwork.size(); i++) {
-		int numKids = int(sortedNetwork[i]->adjustedFitness / sumFitness * network.size());
-		int numMade = numKids;
-		vector<Node> currentIn = sortedNetwork[i]->nodeList;
-		int currentNL = sortedNetwork[i]->nodeList.size();
-		for (int a = 1; count < network.size() && a + i < sortedNetwork.size(); a++) {
-			int id = sortedNetwork[i]->networkId;
-			mateNetwork(currentIn, sortedNetwork[i + a]->nodeList, sortedNetwork[i]->fitness > sortedNetwork[i + a]->fitness, *sortedNetwork[i]);
-			sortedNetwork[i]->networkId = id;
-			count++;
-			numMade--;
-		}
-	}
+    //mates networks
+    for (int i = 0; i < sortedNetwork.size(); i++) {
+        int numKids = int(sortedNetwork[i]->adjustedFitness / sumFitness * network.size());
+        int numMade = numKids;
 
-	//mutates for remainder of spots available
-	for (int i = 0; count < network.size(); i++) {
-		int id = network[count]->networkId;
+        for (int a = 1; newNets.size() < network.size() && a + i < sortedNetwork.size(); a++) {
+            newNets.push_back(Network());
+            int id = sortedNetwork[i]->networkId;
+            mateNetwork(*sortedNetwork[i], *sortedNetwork[i + a], newNets.back());
+            newNets.back().networkId = id;
+            numMade--;
+        }
+    }
 
-		clone(*sortedNetwork[i], *network[count], innovationDict);
+    //mutates for remainder of spots available
+    for (int i = 0; newNets.size() < network.size(); i++) {
+        int id = network[newNets.size()]->networkId;
+        newNets.push_back(Network());
 
-		mutateNetwork(*network[count]);
+        clone(*sortedNetwork[i], newNets.back(), innovationDict);
 
-		network[count]->networkId = id;
-		count++;
+        mutateNetwork(newNets.back());
 
-		if (i == sortedNetwork.size() - 1) {
-			i--; //this can lead to mutating the same network as last time (stacking mutations) but i don't think it is a big deal
-		}
+        newNets.back().networkId = id;
 
-	}
+        if (i == sortedNetwork.size() - 1) {
+            i--;
+        }
 
-	updateStereotype();
+    }
+
+    for (int i = 0; i < newNets.size(); i++) {
+        int id = network[i]->networkId;
+        clone(newNets[i], *network[i], innovationDict);
+        network[i]->networkId = id;
+    }
+
+    updateStereotype();
 }
 
 void Species::adjustFitness()

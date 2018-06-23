@@ -1,4 +1,4 @@
-#include "stdafx.h"
+
 #include "Connection.h"
 #include "Node.h"
 #include <stdio.h>      /* printf, scanf, puts, NULL */

@@ -1,8 +1,9 @@
 #pragma once
 #include <vector>
+#include <string>
 using namespace std;
 
-double tanh(double value);
+double tanH(double value);
 double tanhDerivative(double value);
 
 double sigmoid(double value);

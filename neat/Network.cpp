@@ -1,4 +1,4 @@
-#include "stdafx.h"
+
 #include "Network.h"
 #include "Connection.h"
 #include "Node.h"
@@ -54,7 +54,7 @@ void Network::printNetwork()
 	for (int i = 0; i < nodeList.size(); i++) {
 		Node& n = nodeList[i];
 		string act = "";
-		if (n.activation == &tanh) { //ignore if error
+		if (n.activation == &tanH) { //ignore if error
 			act = "tanh";
 		}
 		else if (n.activation == &sigmoid) {
@@ -295,7 +295,7 @@ Node& Network::createNode(int send)
 		activationDerivative = &sigmoidDerivative;
 	}
 	else {
-		activation = &tanh;
+		activation = &tanH;
 		activationDerivative = &tanhDerivative;
 	}
 	int a = nodeList.size();
@@ -413,8 +413,7 @@ void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
 	for (int i = 0; i < n.nodeList.size(); i++) {
 		Node* node = &n.nodeList[i];
 		for (int a = 0; a < n.nodeList[i].send.size(); a++) {
-			pair<int, int> v = safeRead(*innovationDict, node->send[a].innovation);
-			ans.mutateConnection(v.first, v.second, node->send[a].innovation, node->send[a].weight);
+			ans.mutateConnection(n.nodeList[i].id, n.nodeList[i].send[a].nodeTo->id, node->send[a].innovation, node->send[a].weight);
 		}
 	}
 	ans.fitness = n.fitness;

@@ -126,34 +126,25 @@ void Neat::mutatePopulation()
 
 void Neat::trainNetworks(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid)
 {
-	threads.clear();
+	/*threads.clear();
 	for (int i = 0; i < species.size(); i++) {
 		threads.push_back(thread(&Species::trainNetworks, &species[i], input, valid));
 	}
 
 	for (int i = 0; i < threads.size(); i++) {
 		threads[i].join();
-	}
-
-	/*for (int i = 0; i < species.size(); i++) {
-		species[i].trainNetworks(input, input);
 	}*/
+
+	for (int i = 0; i < species.size(); i++) {
+		species[i].trainNetworks(input, input);
+	}
 }
 
 void Neat::mateSpecies()
 {
-	threads.clear();
-
 	for (int i = 0; i < species.size(); i++) {
-		threads.push_back(thread(&Species::mateSpecies, &species[i]));
-	}
-	for (int i = 0; i < threads.size(); i++) {
-		threads[i].join();
-	}
-
-	/*for (int i = 0; i < species.size(); i++) {
 		species[i].mateSpecies();
-	}*/
+	}
 }
 
 void Neat::speciateAll()
@@ -369,7 +360,6 @@ Species& Neat::getSpecies(int id)
 			return species[i];
 		}
 	}
-	//TODO: need default return
 }
 
 Species& Neat::createSpecies(vector<Network*>& possible)
