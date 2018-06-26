@@ -417,6 +417,7 @@ void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
 		}
 	}
 	ans.fitness = n.fitness;
+	ans.species = n.species;
 }
 
 double Network::calcFitness(vector<pair<vector<double>, vector<double>>>& input)
