@@ -158,6 +158,7 @@
   <ItemGroup>
     <ClCompile Include="Activation.cpp" />
     <ClCompile Include="Connection.cpp" />
+    <ClCompile Include="graphCheck.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="neat.cpp" />
     <ClCompile Include="Network.cpp" />

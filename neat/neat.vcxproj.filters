@@ -68,5 +68,8 @@
     <ClCompile Include="Species.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="graphCheck.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

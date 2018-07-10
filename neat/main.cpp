@@ -20,15 +20,45 @@ vector<Network> allNets;
 
 mutex j;
 void write(Network& winner) {
-	j.lock();
+	//j.lock();
 
 	bestNetworks.open("verification.txt", fstream::app);
-	bestNetworks << winner.fitness << endl;
+	int sumi = 0;
+	for (int i = 0; i < winner.input.size(); i++) {
+		sumi += winner.input[i]->send.size();
+	}
 
+	int sumo = 0;
+	for (int i = 0; i < winner.output.size(); i++) {
+		sumo += winner.output[i]->recieve.size();
+	}
+
+	int s = 0;
+	int r = 0;
+	int t = 0;
+	int nodeSize = winner.input.size() + winner.output.size();
+	int hiddenSize = winner.nodeList.size() - nodeSize;
+	for (int i = nodeSize; i < winner.nodeList.size(); i++) {
+		if (winner.nodeList[i].activation == &sigmoid) {
+			s++;
+		}
+		else if (winner.nodeList[i].activation == &lRelu) {
+			r++;
+		}
+		else {
+			t++;
+		}
+	}
+
+
+	bestNetworks << winner.fitness << " " << hiddenSize << " " << winner.innovation.size() << " " << (double)winner.innovation.size()/(double) winner.nodeList.size() << " " << sumi << " " << sumo << " " << (double) s/ hiddenSize << " " << (double) r/ hiddenSize << " " << (double)t / hiddenSize << " " << endl;
+
+	cout << z << endl;
+	z++;
 	bestNetworks.flush();
 	bestNetworks.close();
 
-	j.unlock();
+	//j.unlock();
 }
 
 mutex mainMutex;
@@ -152,67 +182,53 @@ int main()
 
 	randInit();
 
-	desiredFitness = 1000000;
-	{
-		cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << populationSize << " <<<<<<<<<<<>>>>>>>>>>>>> " << desiredFitness << endl;
-		vector<thread> threads;
-
-		for (int i = 0; i < 8; i++) {
-			threads.push_back(thread(runSample, data, 125));
-		}
-
-		cout << "threads launched" << endl;
-		for (int i = 0; i < threads.size(); i++) {
-			threads[i].join();
-			cout << "thread: " << i << " is finished" << endl;
-		}
-	}
-
-	/*ifstream net("bestNets.txt");
+	ifstream net("bestNets.txt");
 	string line = "";
 	bool newNet = true;
 	for (int i = 0; getline(net, line); i++) {
-	if (line == "" & !newNet) {
-	newNet = true;
-	}
-	else {
-	vector<string> in;
-	split(line, ' ', in);
-	if (newNet) {
-	allNets.push_back(Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2])));
-	allNets.back().fitness = stod(in[3]);
-	cout << fixed << stod(in[3]) << endl;
-	newNet = false;
-	}
-	else if (in.size() == 3) {
-	allNets.back().mutateConnection(stoi(in[0]), stoi(in[1]), 0, stod(in[2]));
-	}
-	else if (in.size() == 2) {
-	if (stoi(in[0]) < allNets.back().input.size() + allNets.back().output.size()) {
-	continue;
-	}
-	allNets.back().createNode(100, stringtoAct(in[1]), stringtoDeriv(in[1]));
-	allNets.back().nodeList.back().id = stoi(in[0]);
-	allNets.back().hidden.push_back(&allNets.back().nodeList.back());
-	}
-	}
+		if (line == "" & !newNet) {
+			newNet = true;
+		}
+		else {
+			vector<string> in;
+			split(line, ' ', in);
+			if (newNet) {
+				allNets.push_back(Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2])));
+				allNets.back().fitness = stod(in[3]);
+				cout << fixed << stod(in[3]) << endl;
+				newNet = false;
+			}
+			else if (in.size() == 3) {
+				allNets.back().mutateConnection(stoi(in[0]), stoi(in[1]), 0, stod(in[2]));
+			}
+			else if (in.size() == 2) {
+				if (stoi(in[0]) < allNets.back().input.size() + allNets.back().output.size()) {
+					continue;
+				}
+				allNets.back().createNode(100, stringtoAct(in[1]), stringtoDeriv(in[1]));
+				allNets.back().nodeList.back().id = stoi(in[0]);
+			}
+		}
 	}
 
 	cout << "num nets " << allNets.size() << endl;
 
-	vector<thread> threads;
+	for (int i = 0; i < allNets.size(); i++) {
+		write(allNets[i]);
+	}
+	/*vector<thread> threads;
 	threads.push_back(thread(runTrial, data, 0, int(allNets.size() / 8) + (allNets.size() % 8)));
 	int lastIndex = int(allNets.size() / 8) + (allNets.size() % 8);
 	for (int i = 0; i < 7; i++) {
-	threads.push_back(thread(runTrial, data, lastIndex, (lastIndex + int(allNets.size() / 8))));
-	cout << "launching " << lastIndex << " " << lastIndex + int(allNets.size() / 8) << endl;
-	lastIndex = lastIndex + int(allNets.size() / 8);
+		threads.push_back(thread(runTrial, data, lastIndex, (lastIndex + int(allNets.size() / 8))));
+		cout << "launching " << lastIndex << " " << lastIndex + int(allNets.size() / 8) << endl;
+		lastIndex = lastIndex + int(allNets.size() / 8);
 	}
 
 	cout << "threads launched" << endl;
 	for (int i = 0; i < threads.size(); i++) {
-	threads[i].join();
-	cout << "thread: " << i << " is finished" << endl;
+		threads[i].join();
+		cout << "thread: " << i << " is finished" << endl;
 	}*/
 	cout << "done";
 	system("pause");
