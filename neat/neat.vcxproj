@@ -102,6 +102,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -148,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="Activation.h" />
     <ClInclude Include="Connection.h" />
+    <ClInclude Include="graphCheck.h" />
     <ClInclude Include="Neat.h" />
     <ClInclude Include="Network.h" />
     <ClInclude Include="Node.h" />

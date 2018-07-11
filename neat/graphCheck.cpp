@@ -7,16 +7,16 @@
 #include <algorithm>
 #include "Network.h"
 #include "Node.h"
+#include "graphCheck.h"
 using namespace std;
 
 vector<vector<int> > dijkstra(vector<vector<int> > graph);
 vector<vector<int> > reindex(vector<vector<int> > graph, vector<int> index);
 vector<int> inv(vector<int> index);
 vector<int> transform(map<vector<int>, vector<int> > signmatrixA,
-	map<vector<int>, vector<int> > signmatrixB, vector<int> vertexA,
-	vector<int> vertexB, vector<int> isoB);
-ifstream infileA("graphA.txt");
-ifstream infileB("graphB.txt");
+map<vector<int>, vector<int> > signmatrixB, vector<int> vertexA,
+vector<int> vertexB, vector<int> isoB);
+
 ofstream outfile("result.txt");
 
 /*
@@ -36,24 +36,24 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 	/*
 	could optimize so that it goes from node to node crawling through the sends using prefound values
 	*/
-	auto createLayers = [](Network& n, vector<vector<Node*>> layers) {
-		function<int(Node&)> trace;
-		trace = [](Node& n) -> int {
-			int leastDist = 0;
 
-			if (n.recieve.size() == 0) {
-				return 0;
-			}
+	function<int(Node&)> trace;
+	//std::function<int(int, int)> stuff;
+	trace = [&trace](Node& n) -> int {
+		int leastDist = 0;
 
-			for (int i = 0; i < n.recieve.size(); i++) {
-				int val = trace(*(n.recieve[i]->nodeFrom));
-				if (leastDist < val) {
-					leastDist = val;
-				}
-			}
-
-			return leastDist + 1;
+		if (n.recieve.size() == 0) {
+			return 0;
 		}
+
+		for (int i = 0; i < n.recieve.size(); i++) {
+			int val = trace(*(n.recieve[i]->nodeFrom));
+			if (leastDist < val) {
+				leastDist = val;
+			}
+		}
+
+		return leastDist + 1;
 	};
 
 	//creates the layers
@@ -100,7 +100,7 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 		}
 
 		for (int b = 0; b < n.send.size(); b++) {
-			output[n.send[b]->nodeTo->id] = 1;
+			output[n.send[b].nodeTo->id] = 1;
 		}
 
 		inputGraph[n.id] = pair<vector<int>, vector<int>>(input, output);
@@ -121,7 +121,7 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 		}
 
 		for (int b = 0; b < n.send.size(); b++) {
-			output[n.send[b]->nodeTo->id] = 1;
+			output[n.send[b].nodeTo->id] = 1;
 		}
 
 		inputGraphB[n.id] = pair<vector<int>, vector<int>>(input, output);
@@ -145,42 +145,93 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 		bg = &inputGraphB;
 	}
 
+	auto createGraph = [](vector<vector<int>>& graph, Node& startNode, vector<vector<Node*>>* smaller, map<int, pair<vector<int>, vector<int>>>* sg) {
+		//gets list of included nodes
+		vector<int> included;
+		vector<Node*> currentNodes;
+		currentNodes.push_back(&startNode);
+
+		while (true) {
+			for (int b = 0; b < currentNodes.size(); b++) {
+				included.push_back(currentNodes[b]->id);
+			}
+
+			vector<Node*> rep;
+			for (int b = 0; b < currentNodes.size(); b++) {
+				for (int c = 0; c < currentNodes[b]->recieve.size(); c++) {
+					rep.push_back(currentNodes[b]->recieve[c]->nodeFrom);
+				}
+			}
+
+			currentNodes = rep;
+
+			if (currentNodes.size() == 0) {
+				break;
+			}
+		}
+
+		unique(included.begin(), included.end());
+		sort(included.begin(), included.end()); //sorts s -> l
+
+		for (int b = 0; b < included.size(); b++) {
+			auto current = (*sg)[included[b]];
+
+			//erase is considered inefficient because it remakes the vector every time
+			for (int c = current.first.size() - 1; c >= 0; c--) {
+				current.first.erase(current.first.begin + c);
+			}
+			for (int c = current.second.size() - 1; c >= 0; c--) {
+				current.second.erase(current.second.begin + c);
+			}
+
+			vector<int> connections;
+			if (included[b] != startNode.id) {
+				for (int c = 0; c < current.first.size(); c++) {
+					if (current.first[c] == 1 || current.second[c] == 1) {
+						connections.push_back(1);
+					}
+					else {
+						connections.push_back(0);
+					}
+				}
+
+				graph.push_back(connections);
+			}
+			else {
+				graph.push_back(current.first);
+			}
+		}
+	};
+
 	for (int i = 1; i < smaller->size() - 1; i++) {
 		for (int a = 0; a < smaller[i].size(); a++) {
-			pair<vector<int>, vector<int>>& node = sg[(*smaller)[i][a]->id];
-			vector < vector<int>> graph;
+			pair<vector<int>, vector<int>>& node = (*sg)[(*smaller)[i][a]->id];
+			vector <vector<int>> graph;
 
+			createGraph(graph, *(*smaller)[i][a], smaller, sg);
 
+			//need to check to make sure not comparing nodes that already have been assigned
 			for (int b = 0; b < bigger[i].size(); b++) {
-				vector < vector<int>> graphb;
+				vector<vector<int>> graphb;
+
+				createGraph(graphb, *(*bigger)[i][b], bigger, bg);
+
+				if (calc(graph, graphb)) {
+					ans[(*smaller)[i][a]->id] = (*bigger)[i][b]->id;
+					break;
+				}
 			}
+
+			//need to make sure not checking the later nodes that are connected to earlier nodes that do not have a comporable node in the other network
 		}
 	}
 }
 
-bool calc(vector<vector<int>> rGraphA, vector<vector<int>> rgraphB)
+bool calc(vector<vector<int>> rgraphA, vector<vector<int>> rgraphB)
 {
-	cout << "The Graph Isomorphism Algorithm" << endl;
-	cout << "by Ashay Dharwadker and John-Tagore Tevet" << endl;
-	cout << "http://www.dharwadker.org/tevet/isomorphism/" << endl;
-	cout << "Copyright (c) 2009" << endl;
-
 	//Process Graph A 
-	cout << "Computing the Sign Matrix of Graph A..." << endl;
-	int i, j, k, q, N1, N2, nA; infileA >> nA;
-	//Read adjacency matrix of graph A from graphA.txt 
-	vector< vector<int> > rgraphA; int valA;
-	for (i = 0; i < nA; i++)
-	{
-		vector<int> rowA;
-		for (j = 0; j < nA; j++)
-		{
-			infileA >> valA;
-			rowA.push_back(valA);
-		}
-		rgraphA.push_back(rowA);
-	}
-	//End reading 
+	int i, j, k, q, N1, N2, nA;
+	nA = rgraphA.size();
 
 	//Initial sorting 
 	vector<vector<int> > distanceA;
@@ -442,21 +493,7 @@ bool calc(vector<vector<int>> rGraphA, vector<vector<int>> rgraphB)
 
 
 	//Process Graph B 
-	cout << "Computing the Sign Matrix of Graph B..." << endl;
-	int nB; infileB >> nB;
-	//Read adjacency matrix of graph B from graphB.txt 
-	vector< vector<int> > rgraphB; int valB;
-	for (i = 0; i < nB; i++)
-	{
-		vector<int> rowB;
-		for (j = 0; j < nB; j++)
-		{
-			infileB >> valB;
-			rowB.push_back(valB);
-		}
-		rgraphB.push_back(rowB);
-	}
-	//End reading 
+	int nB = rgraphB.size();
 
 	//Initial sorting 
 	vector<vector<int> > distanceB;
