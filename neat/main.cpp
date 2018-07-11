@@ -10,6 +10,7 @@
 using namespace std;
 using namespace chrono;
 
+function<void(int, int)> bestCon;
 
 ofstream rawData;
 ofstream bestNetworks;
@@ -179,6 +180,8 @@ int main()
 		p.second = o;
 		data.push_back(p);
 	}
+
+	function<void(int, int)> bestCon;
 
 	randInit();
 

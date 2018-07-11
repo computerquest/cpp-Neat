@@ -8,14 +8,9 @@
 #include "Network.h"
 #include "Node.h"
 #include "graphCheck.h"
+#include <mutex> //for whatever reason this contains the function keyword
 using namespace std;
 
-vector<vector<int> > dijkstra(vector<vector<int> > graph);
-vector<vector<int> > reindex(vector<vector<int> > graph, vector<int> index);
-vector<int> inv(vector<int> index);
-vector<int> transform(map<vector<int>, vector<int> > signmatrixA,
-map<vector<int>, vector<int> > signmatrixB, vector<int> vertexA,
-vector<int> vertexB, vector<int> isoB);
 
 ofstream outfile("result.txt");
 
@@ -37,8 +32,9 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 	could optimize so that it goes from node to node crawling through the sends using prefound values
 	*/
 
+
 	function<int(Node&)> trace;
-	//std::function<int(int, int)> stuff;
+
 	trace = [&trace](Node& n) -> int {
 		int leastDist = 0;
 

@@ -8,6 +8,8 @@
 #include <mutex>
 using namespace std;
 
+function<void(int, int)> bestCon;
+
 Species::Species(int id, vector<Network*> networks, vector<pair<int, int>>* innov, double mutate) {
 	innovationDict = innov;
 	this->id = id;
