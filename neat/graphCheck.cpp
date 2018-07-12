@@ -11,9 +11,6 @@
 #include <mutex> //for whatever reason this contains the function keyword
 using namespace std;
 
-
-ofstream outfile("result.txt");
-
 /*
 want to find which nodes are the same between the two networks
 I am going to start with the least degree node and compare those between the networks
@@ -56,8 +53,9 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 	for (int i = 0; i < aNet.nodeList.size(); i++) {
 		int layer = trace(aNet.nodeList[i]);
 
-		if (layer > aNode.size() - 1) {
-			for (int i = 0; i < layer - aNode.size() - 1; i++) {
+		if (layer > ((int)aNode.size() - 1)) {
+			int prelim = ((int)aNode.size() - 1);
+			for (int a = 0; a < layer - prelim; a++) {
 				aNode.push_back(vector<Node*>());
 			}
 		}
@@ -67,8 +65,9 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 	for (int i = 0; i < bNet.nodeList.size(); i++) {
 		int layer = trace(bNet.nodeList[i]);
 
-		if (layer > bNode.size() - 1) {
-			for (int i = 0; i < layer - bNode.size() - 1; i++) {
+		if (layer >((int)bNode.size() - 1)) {
+			int prelim = ((int)bNode.size() - 1);
+			for (int a = 0; a < layer - prelim; a++) {
 				bNode.push_back(vector<Node*>());
 			}
 		}
@@ -80,7 +79,7 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 	map<int, pair<vector<int>, vector<int>>> inputGraphB;
 
 	//adjusted for input layer and output layer
-	for (int i = 0; i < aNet.nodeList.size() - 1; i++) {
+	for (int i = 0; i < aNet.nodeList.size(); i++) {
 		vector<int> input;
 		vector<int> output;
 
@@ -101,7 +100,7 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 
 		inputGraph[n.id] = pair<vector<int>, vector<int>>(input, output);
 	}
-	for (int i = 0; i < bNet.nodeList.size() - 1; i++) {
+	for (int i = 0; i < bNet.nodeList.size(); i++) {
 		vector<int> input;
 		vector<int> output;
 
@@ -166,19 +165,22 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 			}
 		}
 
-		unique(included.begin(), included.end());
-		sort(included.begin(), included.end()); //sorts s -> l
+		sort(included.begin(), included.end());
+		included.erase(unique(included.begin(), included.end()), included.end());
 
 		for (int b = 0; b < included.size(); b++) {
 			auto current = (*sg)[included[b]];
 
+			vector<int> f;
+			vector<int> s;
 			//erase is considered inefficient because it remakes the vector every time
-			for (int c = current.first.size() - 1; c >= 0; c--) {
-				current.first.erase(current.first.begin + c);
+			for (int c = included.size() - 1; c >= 0; c--) {
+				s.push_back(current.second[included[c]]);
+				f.push_back(current.first[included[c]]);
 			}
-			for (int c = current.second.size() - 1; c >= 0; c--) {
-				current.second.erase(current.second.begin + c);
-			}
+
+			current.first = f;
+			current.second = s;
 
 			vector<int> connections;
 			if (included[b] != startNode.id) {
@@ -199,15 +201,17 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 		}
 	};
 
+	//could optimize so only create graphs 1
 	for (int i = 1; i < smaller->size() - 1; i++) {
-		for (int a = 0; a < smaller[i].size(); a++) {
-			pair<vector<int>, vector<int>>& node = (*sg)[(*smaller)[i][a]->id];
+		cout << "i " << i << endl;
+		for (int a = 0; a < (*smaller)[i].size(); a++) {
+			cout << "a " << a << endl;
 			vector <vector<int>> graph;
 
 			createGraph(graph, *(*smaller)[i][a], smaller, sg);
 
 			//need to check to make sure not comparing nodes that already have been assigned
-			for (int b = 0; b < bigger[i].size(); b++) {
+			for (int b = 0; b < (*bigger)[i].size(); b++) {
 				vector<vector<int>> graphb;
 
 				createGraph(graphb, *(*bigger)[i][b], bigger, bg);
@@ -221,6 +225,8 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 			//need to make sure not checking the later nodes that are connected to earlier nodes that do not have a comporable node in the other network
 		}
 	}
+
+	return ans;
 }
 
 bool calc(vector<vector<int>> rgraphA, vector<vector<int>> rgraphB)
@@ -826,34 +832,28 @@ bool calc(vector<vector<int>> rgraphA, vector<vector<int>> rgraphB)
 
 	if (!possibly_isomorphic)
 	{
-		outfile << "Graph A and Graph B cannot be isomorphic because "
-			<< "they have different sign frequency vectors in lexicographic order."
-			<< endl;
 		cout << "Graph A and Graph B cannot be isomorphic because "
 			<< "they have different sign frequency vectors in lexicographic order."
 			<< endl;
+
+		return false;
 	}
 	if (possibly_isomorphic && !isomorphic)
 	{
-		outfile << "Graph A and Graph B have the same sign frequency vectors "
-			<< "in lexicographic order but cannot be isomorphic." << endl;
 		cout << "Graph A and Graph B have the same sign frequency vectors "
 			<< "in lexicographic order but cannot be isomorphic." << endl;
+
+		return false;
 	}
 	if (possibly_isomorphic && isomorphic)
 	{
-		outfile << "Graph A and Graph B are isomorphic." << endl << endl;
 		cout << "Graph A and Graph B are isomorphic." << endl;
-		outfile << "Isomorphism f:V(A)->V(B);" << endl << endl;
-		for (int i = 0; i < nA; i++)
-		{
-			outfile << "f(" << inv(mainindexA)[vertexA[i]] + 1 << ")\t=\t";
-			outfile << inv(mainindexB)[vertexB[isoB[i]]] + 1 << endl;
-		}
+
+		return true;
 	}
 
 	cout << "See result.txt for details." << endl;
-	return 0;
+	return true;
 }
 
 

@@ -7,10 +7,9 @@
 #include <chrono>
 #include <mutex>
 #include <sstream>
+#include "graphCheck.h"
 using namespace std;
 using namespace chrono;
-
-function<void(int, int)> bestCon;
 
 ofstream rawData;
 ofstream bestNetworks;
@@ -181,8 +180,6 @@ int main()
 		data.push_back(p);
 	}
 
-	function<void(int, int)> bestCon;
-
 	randInit();
 
 	ifstream net("bestNets.txt");
@@ -216,8 +213,18 @@ int main()
 
 	cout << "num nets " << allNets.size() << endl;
 
-	for (int i = 0; i < allNets.size(); i++) {
-		write(allNets[i]);
+	//auto ans = calcBetween(allNets[0], allNets[0]);
+	//auto ansa = calcBetween(allNets[0], allNets[1]);
+
+	int bestSize = 0;
+	map<int, int> best;
+	for (int i = 1; i < allNets.size(); i++) {
+		auto ans = calcBetween(allNets[0], allNets[i]);
+
+		if (ans.size() > bestSize) {
+			best = ans;
+			bestSize = best.size();
+		}
 	}
 	/*vector<thread> threads;
 	threads.push_back(thread(runTrial, data, 0, int(allNets.size() / 8) + (allNets.size() % 8)));
