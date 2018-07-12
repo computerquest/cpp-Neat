@@ -182,7 +182,13 @@ int main()
 
 	randInit();
 
-	ifstream net("bestNets.txt");
+	Neat neat = Neat(50, 2, 1, .3, .1, &sigmoid, &sigmoidDerivative);
+
+	Network winner;
+
+	vector<double> epochs = neat.start(data, data, 10, 1000000000, winner);
+
+	/*ifstream net("bestNets.txt");
 	string line = "";
 	bool newNet = true;
 	for (int i = 0; getline(net, line); i++) {
@@ -213,19 +219,6 @@ int main()
 
 	cout << "num nets " << allNets.size() << endl;
 
-	//auto ans = calcBetween(allNets[0], allNets[0]);
-	//auto ansa = calcBetween(allNets[0], allNets[1]);
-
-	int bestSize = 0;
-	map<int, int> best;
-	for (int i = 1; i < allNets.size(); i++) {
-		auto ans = calcBetween(allNets[0], allNets[i]);
-
-		if (ans.size() > bestSize) {
-			best = ans;
-			bestSize = best.size();
-		}
-	}
 	/*vector<thread> threads;
 	threads.push_back(thread(runTrial, data, 0, int(allNets.size() / 8) + (allNets.size() % 8)));
 	int lastIndex = int(allNets.size() / 8) + (allNets.size() % 8);

@@ -413,11 +413,11 @@ void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
 	for (int i = 0; i < n.nodeList.size(); i++) {
 		Node* node = &n.nodeList[i];
 		for (int a = 0; a < n.nodeList[i].send.size(); a++) {
-			pair<int, int> v = safeRead(*innovationDict, node->send[a].innovation);
-			ans.mutateConnection(v.first, v.second, node->send[a].innovation, node->send[a].weight);
+			ans.mutateConnection(n.nodeList[i].id, n.nodeList[i].send[a].nodeTo->id, node->send[a].innovation, node->send[a].weight);
 		}
 	}
 	ans.fitness = n.fitness;
+	ans.species = n.species;
 }
 
 double Network::calcFitness(vector<pair<vector<double>, vector<double>>>& input)

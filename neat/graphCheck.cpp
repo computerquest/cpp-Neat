@@ -203,9 +203,7 @@ map<int, int> calcBetween(Network& aNet, Network& bNet) {
 
 	//could optimize so only create graphs 1
 	for (int i = 1; i < smaller->size() - 1; i++) {
-		cout << "i " << i << endl;
 		for (int a = 0; a < (*smaller)[i].size(); a++) {
-			cout << "a " << a << endl;
 			vector <vector<int>> graph;
 
 			createGraph(graph, *(*smaller)[i][a], smaller, sg);
@@ -832,27 +830,17 @@ bool calc(vector<vector<int>> rgraphA, vector<vector<int>> rgraphB)
 
 	if (!possibly_isomorphic)
 	{
-		cout << "Graph A and Graph B cannot be isomorphic because "
-			<< "they have different sign frequency vectors in lexicographic order."
-			<< endl;
-
 		return false;
 	}
 	if (possibly_isomorphic && !isomorphic)
 	{
-		cout << "Graph A and Graph B have the same sign frequency vectors "
-			<< "in lexicographic order but cannot be isomorphic." << endl;
-
 		return false;
 	}
 	if (possibly_isomorphic && isomorphic)
 	{
-		cout << "Graph A and Graph B are isomorphic." << endl;
-
 		return true;
 	}
 
-	cout << "See result.txt for details." << endl;
 	return true;
 }
 

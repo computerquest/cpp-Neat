@@ -52,7 +52,7 @@ vector<double> Neat::start(vector<pair<vector<double>, vector<double>>>& input, 
 	int z = 0;
 	int extra = 10;
 	while (strikes > 0 && extra >= 1) {
-		//cout << "//////////////////////////////////////////////////////////////" << endl;
+		cout << "//////////////////////////////////////////////////////////////" << endl;
 
 		mateSpecies();
 
@@ -74,13 +74,6 @@ vector<double> Neat::start(vector<pair<vector<double>, vector<double>>>& input, 
 		//compares the best
 		if (bestIndex != -1) {
 			clone(network[bestIndex], bestNet, &connectionInnovation);
-			/*int bF = bestNet.calcFitness(input);
-			int bfa = bestNet.calcFitness(input);
-			int bfb = bestNet.calcFitness(input);
-			int fit = network[bestIndex].calcFitness(input);
-			if (bF != fit || ((int)bestNet.fitness) != fit) {
-			cout << "shit" << endl;
-			}*/
 			strikes = cutoff;
 		}
 		else {
@@ -91,10 +84,10 @@ vector<double> Neat::start(vector<pair<vector<double>, vector<double>>>& input, 
 			}
 		}
 
-		/*cout << "best" << endl;
+		cout << "best" << endl;
 		bestNet.printNetwork();
 		cout << "epoch:" << z << " best: " << bestFit << endl;
-		cout << endl;*/
+		cout << endl;
 		z++;
 
 		if (bestFit > target) {
@@ -126,34 +119,34 @@ void Neat::mutatePopulation()
 
 void Neat::trainNetworks(vector<pair<vector<double>, vector<double>>>& input, vector<pair<vector<double>, vector<double>>>& valid)
 {
-	/*threads.clear();
+	threads.clear();
 	for (int i = 0; i < species.size(); i++) {
 		threads.push_back(thread(&Species::trainNetworks, &species[i], input, valid));
 	}
 
 	for (int i = 0; i < threads.size(); i++) {
 		threads[i].join();
-	}*/
-
-	for (int i = 0; i < species.size(); i++) {
-		species[i].trainNetworks(input, input);
 	}
+
+	/*for (int i = 0; i < species.size(); i++) {
+		species[i].trainNetworks(input, input);
+	}*/
 }
 
 void Neat::mateSpecies()
 {
-	/*threads.clear();
+	threads.clear();
 
 	for (int i = 0; i < species.size(); i++) {
 		threads.push_back(thread(&Species::mateSpecies, &species[i]));
 	}
 	for (int i = 0; i < threads.size(); i++) {
 		threads[i].join();
-	}*/
-
-	for (int i = 0; i < species.size(); i++) {
-		species[i].mateSpecies();
 	}
+
+	/*for (int i = 0; i < species.size(); i++) {
+		species[i].mateSpecies();
+	}*/
 }
 
 void Neat::speciateAll()
