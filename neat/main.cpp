@@ -111,7 +111,7 @@ void networkTrial(vector<pair<vector<double>, vector<double>>>& data, int id) {
 	Network n(2, 1, id, 0, .01, false, &sigmoid, &sigmoidDerivative);
 	
 	vector<Node*>lastLayer = n.input;
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 5; i++) {
 		vector<Node*> currentLayer;
 		for (int a = 0; a < 10; a++) {
 			currentLayer.push_back(&n.createNode(100, &sigmoid, &sigmoidDerivative));
