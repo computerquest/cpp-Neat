@@ -106,6 +106,34 @@ void runTrial(Network& a, int start, int end) {
 		start++;
 	}
 }
+
+void networkTrial(vector<pair<vector<double>, vector<double>>>& data, int id) {
+	Network n(2, 1, id, 0, .01, false, &sigmoid, &sigmoidDerivative);
+	
+	vector<Node*>lastLayer = n.input;
+	for (int i = 0; i < 10; i++) {
+		vector<Node*> currentLayer;
+		for (int a = 0; a < 10; a++) {
+			currentLayer.push_back(&n.createNode(100, &sigmoid, &sigmoidDerivative));
+		}
+
+		for (int a = 0; a < lastLayer.size(); a++) {
+			for (int b = 0; b < currentLayer.size(); b++) {
+				n.mutateConnection(lastLayer[a]->id, currentLayer[b]->id, 0);
+			}
+		}
+
+		lastLayer = currentLayer;
+	}
+
+	for (int a = 0; a < lastLayer.size(); a++) {
+		for (int b = 0; b < n.output.size(); b++) {
+			n.mutateConnection(lastLayer[a]->id, n.output[b]->id, 0);
+		}
+	}
+
+	n.trainset(data, data, 100000);
+}
 int main()
 {
 
@@ -171,7 +199,7 @@ int main()
 			threads[i].join();
 			cout << "thread: " << i << " is finished" << endl;
 		}
-	}*/
+	}
 
 	ifstream net("bestNets.txt");
 	string line = "";
@@ -204,10 +232,10 @@ int main()
 
 	cout << "num nets " << allNets.size() << endl;
 	s.network.push_back(&allNets[0]);
-
+	*/
 	vector<thread> threads;
 	for (int i = 0; i < 7; i++) {
-		threads.push_back(thread(runTrial, allNets[i], int(i+1), int(allNets.size()-i-1)));
+		threads.push_back(thread(networkTrial, data, i));
 	}
 
 	cout << "threads launched" << endl;
