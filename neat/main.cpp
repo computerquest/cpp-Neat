@@ -2,7 +2,77 @@
 #include <iostream>
 #include "Neat.h"
 #include "Activation.h"
+#include <fstream>
+#include <string>
+#include <chrono>
+#include <sstream>
+#include <mutex>
 using namespace std;
+using namespace chrono;
+
+void split(const std::string &s, char delim, vector<string> &result) {
+	stringstream ss(s);
+	string item;
+	while (getline(ss, item, delim)) {
+		result.push_back(item);
+	}
+}
+void readNets(string file, vector<Network>& allNets) {
+	ifstream net(file);
+	string line = "";
+	bool newNet = true;
+	for (int i = 0; getline(net, line); i++) {
+		if (line == "" & !newNet) {
+			newNet = true;
+		}
+		else {
+			vector<string> in;
+			split(line, ' ', in);
+			if (newNet) {
+				allNets.push_back(Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2])));
+				allNets.back().fitness = stod(in[3]);
+				cout << fixed << stod(in[3]) << endl;
+				newNet = false;
+			}
+			else if (in.size() == 3) {
+				allNets.back().mutateConnection(stoi(in[0]), stoi(in[1]), 0, stod(in[2]));
+			}
+			else if (in.size() == 2) {
+				if (stoi(in[0]) < allNets.back().input.size() + allNets.back().output.size()) {
+					continue;
+				}
+				allNets.back().createNode(100, stringtoAct(in[1]), stringtoDeriv(in[1]));
+				allNets.back().nodeList.back().id = stoi(in[0]);
+			}
+		}
+	}
+}
+
+mutex mainMutex;
+void write(Network& winner, string file) {
+	mainMutex.lock();
+
+	ofstream bestNetworks;
+	bestNetworks.open(file);
+
+	bestNetworks << winner.input.size() - 1 << " " << winner.output.size() << " " << acttoString(winner.nodeList[0].activation).c_str() << " " << winner.fitness << " " << int(epochs[1]) << endl;
+	
+	for (int i = 0; i < winner.nodeList.size(); i++) {
+		Node& n = winner.nodeList[i];
+		bestNetworks << n.id << " " << acttoString(n.activation).c_str() << endl;
+	}
+	for (int i = 0; i < winner.nodeList.size(); i++) {
+		for (int a = 0; a < winner.nodeList[i].send.size(); a++) {
+			bestNetworks << winner.nodeList[i].id << " " << winner.nodeList[i].send[a].nodeTo->id << " " << winner.nodeList[i].send[a].weight << endl;
+		}
+	}
+
+	bestNetworks << endl;
+	bestNetworks.flush();
+	bestNetworks.close();
+
+	mainMutex.unlock();
+}
 
 int main()
 {

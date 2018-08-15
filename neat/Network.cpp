@@ -476,3 +476,36 @@ double Network::calcFitness(vector<pair<vector<double>, vector<double>>>& input)
 	fitness = 1 / final; //calculate the fitness
 	return fitness;
 }
+
+void Network::removeNode(int id)
+{
+	Node& n = getNode(id);
+
+	for (int i = 0; i < n.send.size(); i++) {
+		removeConnection(n.id, n.send[i].nodeTo->id);
+	}
+
+	for (int i = 0; i < n.recieve.size(); i++) {
+		removeConnection(n.recieve[i]->nodeFrom->id, n.id);
+	}
+}
+
+void Network::removeConnection(int from, int to)
+{
+	Node& f = getNode(from);
+	Node& t = getNode(to);
+
+	for (int i = 0; i < t.recieve.size(); i++) {
+		if (t.recieve[i]->nodeFrom->id == to) {
+			t.recieve.erase(t.recieve.begin() + i);
+			break;
+		}
+	}
+
+	for (int i = 0; i < f.send.size(); i++) {
+		if (f.send[i].nodeTo->id == to) {
+			f.send.erase(f.send.begin() + i);
+			break;
+		}
+	}
+}

@@ -44,6 +44,9 @@ public:
 	bool checkCircle(Node& n, int goal, int preCheck[]);
 
 	double calcFitness(vector<pair<vector<double>, vector<double>>>& input);
+
+	void removeNode(int id); //this will not get rid of the node object just disconnect it
+	void removeConnection(int from, int to);
 };
 
 void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict);
