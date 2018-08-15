@@ -134,6 +134,44 @@ void networkTrial(vector<pair<vector<double>, vector<double>>>& data, int id) {
 
 	n.trainset(data, data, 100000);
 }
+
+void ezPrune(Network& n) {
+	for (int i = 0; i < n.nodeList.size(); i++) {
+		double sum = 0;
+		for (int a = 0; a < n.nodeList[i].recieve.size(); a++) {
+			sum += abs(n.nodeList[i].recieve[a]->weight);
+		}
+
+		for (int a = 0; a < n.nodeList[i].recieve.size(); a++) {
+			n.nodeList[i].recieve[a]->weight /= sum;
+		}
+	}
+
+	for (int i = 0; i < n.nodeList.size(); i++) {
+		bool bad = true;
+		double sum = 0;
+		for (int a = 0; a < n.nodeList[i].send.size(); a++) {
+			if (abs(n.nodeList[i].send[a].weight) > .1) {
+				bad = false; 
+				break;
+			}
+
+			sum += abs(n.nodeList[i].send[a].weight);
+		}
+
+		if (bad) {
+			cout << n.nodeList[i].id << " " << sum << endl;
+		}
+		else {
+			for (int a = 0; a < n.nodeList[i].send.size(); a++) {
+				if (abs(n.nodeList[i].send[a].weight) < .1) {
+					cout << i << " " << n.nodeList[i].send[a].nodeTo->id << " " << n.nodeList[i].send[a].weight << endl;
+				}
+			}
+		}
+	}
+}
+
 int main()
 {
 
@@ -199,9 +237,9 @@ int main()
 			threads[i].join();
 			cout << "thread: " << i << " is finished" << endl;
 		}
-	}
+	}*/
 
-	ifstream net("bestNets.txt");
+	ifstream net("testMe.txt");
 	string line = "";
 	bool newNet = true;
 	for (int i = 0; getline(net, line); i++) {
@@ -231,9 +269,8 @@ int main()
 	}
 
 	cout << "num nets " << allNets.size() << endl;
-	s.network.push_back(&allNets[0]);
-	*/
-	vector<thread> threads;
+	//s.network.push_back(&allNets[0]);
+	/*vector<thread> threads;
 	for (int i = 0; i < 7; i++) {
 		threads.push_back(thread(networkTrial, data, i));
 	}
@@ -242,7 +279,9 @@ int main()
 	for (int i = 0; i < threads.size(); i++) {
 		threads[i].join();
 		cout << "thread: " << i << " is finished" << endl;
-	}
+	}*/
+
+	ezPrune(allNets[0]);
 
 	cout << "done";
 	system("pause");
