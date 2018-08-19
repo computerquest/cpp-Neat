@@ -6,8 +6,9 @@
 #include "Activation.h"
 #include <math.h>
 #include <mutex>
-#include <fstream>
 #include <string>
+#include <sstream>
+#include <fstream>
 using namespace std;
 
 Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon, double(*activation)(double value), double(*activationDerivative)(double value))
@@ -482,6 +483,58 @@ void Network::removeConnection(int from, int to)
 		if (f.send[i].nodeTo->id == to) {
 			f.send.erase(f.send.begin() + i);
 			break;
+		}
+	}
+}
+
+void Network::write(string file) {
+	ofstream bestNetworks;
+	bestNetworks.open(file);
+
+	bestNetworks << input.size() - 1 << " " << output.size() << " " << acttoString(nodeList[0].activation).c_str() << " " << fitness << " " << endl;
+
+	for (int i = 0; i < nodeList.size(); i++) {
+		Node& n = nodeList[i];
+		bestNetworks << n.id << " " << acttoString(n.activation).c_str() << endl;
+	}
+	for (int i = 0; i < nodeList.size(); i++) {
+		for (int a = 0; a < nodeList[i].send.size(); a++) {
+			bestNetworks << nodeList[i].id << " " << nodeList[i].send[a].nodeTo->id << " " << nodeList[i].send[a].weight << endl;
+		}
+	}
+
+	bestNetworks << endl;
+	bestNetworks.flush();
+	bestNetworks.close();
+}
+
+void split(const std::string &s, char delim, vector<string> &result) {
+	stringstream ss(s);
+	string item;
+	while (getline(ss, item, delim)) {
+		result.push_back(item);
+	}
+}
+void Network::read(string file, Network& allNets) {
+	ifstream net(file);
+	string line = "";
+	bool newNet = true;
+	for (int i = 0; getline(net, line); i++) {
+		vector<string> in;
+		split(line, ' ', in);
+		if (i == 0) {
+			allNets = Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2]));
+			allNets.fitness = stod(in[3]);
+		}
+		else if (in.size() == 3) {
+			allNets.mutateConnection(stoi(in[0]), stoi(in[1]), 0, stod(in[2]));
+		}
+		else if (in.size() == 2) {
+			if (stoi(in[0]) < allNets.input.size() + allNets.output.size()) { //makes sure not create 
+				continue;
+			}
+			allNets.createNode(100, stringtoAct(in[1]), stringtoDeriv(in[1]));
+			allNets.nodeList.back().id = stoi(in[0]);
 		}
 	}
 }
