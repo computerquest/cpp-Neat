@@ -10,32 +10,35 @@
 using namespace std;
 using namespace chrono;
 
-
-ofstream rawData;
-ofstream bestNetworks;
-int desiredFitness = 1000000;
-int populationSize = 3;
-int z = 0;
-vector<Network> allNets;
-
-mutex j;
-void write(Network& winner) {
-	j.lock();
-
-	bestNetworks.open("verification.txt", fstream::app);
-	int sumCon = 0;
-	for (int i = 0; i < winner.nodeList.size(); i++) {
-		sumCon += winner.nodeList[i].send.size();
+void readNets(string file, vector<Network>& allNets) {
+	ifstream net(file);
+	string line = "";
+	bool newNet = true;
+	for (int i = 0; getline(net, line); i++) {
+		if (line == "" & !newNet) {
+			newNet = true;
+		}
+		else {
+			vector<string> in;
+			split(line, ' ', in);
+			if (newNet) {
+				allNets.push_back(Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2])));
+				allNets.back().fitness = stod(in[3]);
+				cout << fixed << stod(in[3]) << endl;
+				newNet = false;
+			}
+			else if (in.size() == 3) {
+				allNets.back().mutateConnection(stoi(in[0]), stoi(in[1]), 0, stod(in[2]));
+			}
+			else if (in.size() == 2) {
+				if (stoi(in[0]) < allNets.back().input.size() + allNets.back().output.size()) {
+					continue;
+				}
+				allNets.back().createNode(100, stringtoAct(in[1]), stringtoDeriv(in[1]));
+				allNets.back().nodeList.back().id = stoi(in[0]);
+			}
+		}
 	}
-
-	cout << "finished " << z << endl;
-	bestNetworks <<  winner.nodeList.size() << " " << sumCon << endl;
-
-	bestNetworks.flush();
-	bestNetworks.close();
-
-	z++;
-	j.unlock();
 }
 
 mutex mainMutex;
@@ -50,7 +53,8 @@ void write(vector<double> epochs, Network& winner, int time) {
 	rawData.flush();
 	rawData.close();
 
-	bestNetworks << winner.input.size() - 1 << " " << winner.output.size() << " " << acttoString(winner.nodeList[0].activation).c_str() << " " << winner.fitness << " " << int(epochs[1]) << endl;
+	bestNetworks << winner.input.size() - 1 << " " << winner.output.size() << " " << acttoString(winner.nodeList[0].activation).c_str() << " " << winner.fitness << " " << endl;
+	
 	for (int i = 0; i < winner.nodeList.size(); i++) {
 		Node& n = winner.nodeList[i];
 		bestNetworks << n.id << " " << acttoString(n.activation).c_str() << endl;

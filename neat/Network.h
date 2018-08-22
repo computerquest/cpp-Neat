@@ -51,6 +51,8 @@ public:
 	void write(string file);
 
 	static void read(string file, Network& ans);
+
+	void remap();
 };
 
 void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict);

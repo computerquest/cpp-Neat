@@ -3,6 +3,7 @@
 #include <ctime>
 #include "Activation.h"
 #include <mutex>
+#include <sstream>
 using namespace std;
 
 typedef std::mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
@@ -113,4 +114,12 @@ double random(double f, double t)
 	std::uniform_int_distribution<int32_t> uint_dist10(a, b);
 
 	return uint_dist10(rng) / (double)RAND_MAX;
+}
+
+void split(const std::string &s, char delim, vector<string> &result) {
+	stringstream ss(s);
+	string item;
+	while (getline(ss, item, delim)) {
+		result.push_back(item);
+	}
 }

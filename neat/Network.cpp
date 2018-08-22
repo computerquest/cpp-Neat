@@ -6,6 +6,7 @@
 #include "Activation.h"
 #include <math.h>
 #include <mutex>
+#include <map>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -508,13 +509,7 @@ void Network::write(string file) {
 	bestNetworks.close();
 }
 
-void split(const std::string &s, char delim, vector<string> &result) {
-	stringstream ss(s);
-	string item;
-	while (getline(ss, item, delim)) {
-		result.push_back(item);
-	}
-}
+
 void Network::read(string file, Network& allNets) {
 	ifstream net(file);
 	string line = "";
@@ -536,5 +531,19 @@ void Network::read(string file, Network& allNets) {
 			allNets.createNode(100, stringtoAct(in[1]), stringtoDeriv(in[1]));
 			allNets.nodeList.back().id = stoi(in[0]);
 		}
+	}
+}
+
+void Network::remap()
+{
+	for (int i = 0; i < nodeList.size(); i++) {
+		if (nodeList[i].send.size() == 0 && nodeList[i].recieve.size() == 0) {
+			nodeList.erase(nodeList.begin() + i);
+			i--;
+		}
+	}
+
+	for (int i = 0; i < nodeList.size(); i++) {
+		nodeList[i].id = i;
 	}
 }
