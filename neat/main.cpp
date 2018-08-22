@@ -85,13 +85,6 @@ void runSample(vector<pair<vector<double>, vector<double>>>& data, int numTime) 
 		write(epochs, winner, finalTime.count());
 	}
 }
-void split(const std::string &s, char delim, vector<string> &result) {
-	stringstream ss(s);
-	string item;
-	while (getline(ss, item, delim)) {
-		result.push_back(item);
-	}
-}
 
 Species s;
 
@@ -136,40 +129,38 @@ void networkTrial(vector<pair<vector<double>, vector<double>>>& data, int id) {
 }
 
 void ezPrune(Network& n) {
-	for (int i = 0; i < n.nodeList.size(); i++) {
-		double sum = 0;
-		for (int a = 0; a < n.nodeList[i].recieve.size(); a++) {
-			sum += abs(n.nodeList[i].recieve[a]->weight);
-		}
+	double check = .01;
+	for (int z = 0; z < 10; z++) {
+		cout << "iter: " << z << " " << n.nodeList.size() << endl;
+		for (int i = 0; i < n.nodeList.size(); i++) {
+			double sum = 0;
 
-		for (int a = 0; a < n.nodeList[i].recieve.size(); a++) {
-			n.nodeList[i].recieve[a]->weight /= sum;
-		}
-	}
-
-	for (int i = 0; i < n.nodeList.size(); i++) {
-		bool bad = true;
-		double sum = 0;
-		for (int a = 0; a < n.nodeList[i].send.size(); a++) {
-			if (abs(n.nodeList[i].send[a].weight) > .1) {
-				bad = false; 
-				break;
+			for (int a = 0; a < n.nodeList[i].recieve.size(); a++) {
+				sum += abs(n.nodeList[i].recieve[a]->weight);
 			}
 
-			sum += abs(n.nodeList[i].send[a].weight);
-		}
+			for (int a = 0; a < n.nodeList[i].recieve.size(); a++) {
+				n.nodeList[i].recieve[a]->weight /= sum;
 
-		if (bad) {
-			cout << n.nodeList[i].id << " " << sum << endl;
-		}
-		else {
-			for (int a = 0; a < n.nodeList[i].send.size(); a++) {
-				if (abs(n.nodeList[i].send[a].weight) < .1) {
-					cout << i << " " << n.nodeList[i].send[a].nodeTo->id << " " << n.nodeList[i].send[a].weight << endl;
+				if (abs(n.nodeList[i].recieve[a]->weight) < check) {
+					cout << n.nodeList[i].recieve[a]->nodeFrom->id << " " << n.nodeList[i].id << " " << n.nodeList[i].recieve[a]->weight << endl;
+					n.removeConnection(n.nodeList[i].recieve[a]->nodeFrom->id, n.nodeList[i].id);
+				}
+				else {
+					n.nodeList[i].recieve[a]->weight *= sum;
 				}
 			}
 		}
+
+		for (int i = 0; i < n.nodeList.size(); i++) {
+			if (n.nodeList[i].send.size() == 0) {
+				cout << "remove: " << n.nodeList[i].id << endl;
+				n.removeNode(n.nodeList[i].id);
+			}
+		}
 	}
+
+	n.write("testingStuff.txt");
 }
 
 int main()

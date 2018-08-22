@@ -474,7 +474,7 @@ void Network::removeConnection(int from, int to)
 	Node& t = getNode(to);
 
 	for (int i = 0; i < t.recieve.size(); i++) {
-		if (t.recieve[i]->nodeFrom->id == to) {
+		if (t.recieve[i]->nodeFrom->id == from) {
 			t.recieve.erase(t.recieve.begin() + i);
 			break;
 		}
@@ -508,7 +508,6 @@ void Network::write(string file) {
 	bestNetworks.flush();
 	bestNetworks.close();
 }
-
 
 void Network::read(string file, Network& allNets) {
 	ifstream net(file);
