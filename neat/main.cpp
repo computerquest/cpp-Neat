@@ -260,9 +260,10 @@ int main()
 	}
 
 	cout << "num nets " << allNets.size() << endl;
-	//s.network.push_back(&allNets[0]);
-	/*vector<thread> threads;
-	for (int i = 0; i < 7; i++) {
+	s.network.push_back(&allNets[0]);
+	*/
+	vector<thread> threads;
+	for (int i = 0; i < 8; i++) {
 		threads.push_back(thread(networkTrial, data, i));
 	}
 
