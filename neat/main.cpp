@@ -5,19 +5,19 @@
 #include <fstream>
 #include "Activation.h"
 #include <chrono>
+#include "Network.h"
 #include <mutex>
 #include <sstream>
+#include<ctime>
 using namespace std;
 using namespace chrono;
 
 
-ofstream rawData;
-ofstream bestNetworks;
-int z = 0;
-vector<Network> allNets;
 vector<pair<vector<double>, vector<double>>> dataset;
+//dt is global and is used for the timestamp of files
 
-void neatSample(int numTime, int populationSize, int desiredFitness) {
+mutex neatMutex;
+void neatSample(int numTime, int populationSize, int desiredFitness, string mod) {
 	for (int a = 1; a < numTime; a++) {
 		Neat neat = Neat(populationSize, 2, 1, .3, .1, &sigmoid, &sigmoidDerivative);
 
@@ -26,53 +26,72 @@ void neatSample(int numTime, int populationSize, int desiredFitness) {
 		milliseconds ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch());
 		vector<double> epochs = neat.start(dataset, dataset, 10, desiredFitness, winner);
 		milliseconds finalTime = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()) - ms;
-	}
-}
 
+		winner.write();
 
-void mateSample(Network& a, int start, int end) {
-	Species s;
-	while (start < end) {
-		Network& net = allNets[start];
+		neatMutex.lock();
 
-		Network n;
-		s.mateNetwork(a.nodeList, net.nodeList, net.fitness > a.fitness, n);
-		start++;
-	}
-}
-
-void networkSample(int id) {
-	Network n(2, 1, id, 0, .01, false, &sigmoid, &sigmoidDerivative);
-
-	vector<Node*>lastLayer = n.input;
-	for (int i = 0; i < 5; i++) {
-		vector<Node*> currentLayer;
-		for (int a = 0; a < 10; a++) {
-			currentLayer.push_back(&n.createNode(100, &sigmoid, &sigmoidDerivative));
+		ofstream bestNetworks;
+		bestNetworks.open(".\\results\\networkTrial\\" + mod + " " + dt + ".txt", std::ios_base::app);
+		int sumi = 0;
+		for (int i = 0; i < winner.input.size(); i++) {
+			sumi += winner.input[i]->send.size();
 		}
 
-		for (int a = 0; a < lastLayer.size(); a++) {
-			for (int b = 0; b < currentLayer.size(); b++) {
-				n.mutateConnection(lastLayer[a]->id, currentLayer[b]->id, 0);
+		int sumo = 0;
+		for (int i = 0; i < winner.output.size(); i++) {
+			sumo += winner.output[i]->recieve.size();
+		}
+
+		int s = 0;
+		int r = 0;
+		int t = 0;
+		int nodeSize = winner.input.size() + winner.output.size();
+		int hiddenSize = winner.nodeList.size() - nodeSize;
+		for (int i = nodeSize; i < winner.nodeList.size(); i++) {
+			if (winner.nodeList[i].activation == &sigmoid) {
+				s++;
+			}
+			else if (winner.nodeList[i].activation == &lRelu) {
+				r++;
+			}
+			else {
+				t++;
 			}
 		}
 
-		lastLayer = currentLayer;
-	}
 
-	for (int a = 0; a < lastLayer.size(); a++) {
-		for (int b = 0; b < n.output.size(); b++) {
-			n.mutateConnection(lastLayer[a]->id, n.output[b]->id, 0);
-		}
-	}
+		bestNetworks << winner.fitness << " " << hiddenSize << " " << winner.innovation.size() << " " << (double)winner.innovation.size() / (double)winner.nodeList.size() << " " << sumi << " " << sumo << " " << (double)s / hiddenSize << " " << (double)r / hiddenSize << " " << (double)t / hiddenSize << " " << to_string(epochs[1]) << endl;
 
-	n.trainset(dataset, dataset, 100000);
+		bestNetworks.flush();
+		bestNetworks.close();
+		neatMutex.unlock();
+	}
 }
 
-void ezPrune(Network& n) {
-	double check = .005;
+mutex nsMutex;
+void networkSample(Network& n, int iter, int numTime, string mod) {
+	for (int a = 1; a < numTime; a++) {
+		double fitness = n.trainset(dataset, dataset, iter);
+
+		nsMutex.lock();
+
+		ofstream o;
+		o.open(".\\results\\networkTrial\\" +mod + " " + dt + ".txt" , std::ios_base::app);
+		o << 1/fitness << endl;
+		o.flush();
+		o.close();
+
+		nsMutex.unlock();
+
+		n.networkId += a;
+		n.write();
+	}
+}
+
+void ezPrune(Network& n, double check) {
 	for (int z = 0; z < 10; z++) {
-		cout << "iter: " << z << " " << n.nodeList.size() << endl;
+		std::cout << "iter: " << z << " " << n.nodeList.size() << endl;
 		for (int i = 0; i < n.nodeList.size(); i++) {
 			double sum = 0;
 
@@ -84,7 +103,7 @@ void ezPrune(Network& n) {
 				n.nodeList[i].recieve[a]->weight /= sum;
 
 				if (abs(n.nodeList[i].recieve[a]->weight) < check) {
-					cout << n.nodeList[i].recieve[a]->nodeFrom->id << " " << n.nodeList[i].id << " " << n.nodeList[i].recieve[a]->weight << endl;
+					std::cout << n.nodeList[i].recieve[a]->nodeFrom->id << " " << n.nodeList[i].id << " " << n.nodeList[i].recieve[a]->weight << endl;
 					n.removeConnection(n.nodeList[i].recieve[a]->nodeFrom->id, n.nodeList[i].id);
 				}
 				else {
@@ -95,7 +114,7 @@ void ezPrune(Network& n) {
 
 		for (int i = 0; i < n.nodeList.size(); i++) {
 			if (n.nodeList[i].send.size() == 0 && n.nodeList[i].recieve.size() != 0 && n.nodeList[i].id != 0) {
-				cout << "remove: " << n.nodeList[i].id << endl;
+				std::cout << "remove: " << n.nodeList[i].id << endl;
 				n.removeNode(n.nodeList[i].id);
 			}
 		}
@@ -103,11 +122,13 @@ void ezPrune(Network& n) {
 
 	n.remap();
 
-	n.write("testingStuff.txt");
+	n.calcFitness(dataset);
+
+	n.write();
 }
 
 void loadAllNets(vector<Network>& allNets, string file) {
-	ifstream net(file);
+	ifstream net("./Result Files/" + file);
 	string line = "";
 	bool newNet = true;
 	for (int i = 0; getline(net, line); i++) {
@@ -120,7 +141,7 @@ void loadAllNets(vector<Network>& allNets, string file) {
 			if (newNet) {
 				allNets.push_back(Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2])));
 				allNets.back().fitness = stod(in[3]);
-				cout << fixed << stod(in[3]) << endl;
+				std::cout << fixed << stod(in[3]) << endl;
 				newNet = false;
 			}
 			else if (in.size() == 3) {
@@ -138,22 +159,63 @@ void loadAllNets(vector<Network>& allNets, string file) {
 
 }
 
-void neatTrial() {
+void neatTrial(string mod) {
 	int desiredFitness = 1;
 	int populationSize = 3;
 	{
-		cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << populationSize << " <<<<<<<<<<<>>>>>>>>>>>>> " << desiredFitness << endl;
+		std::cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << populationSize << " <<<<<<<<<<<>>>>>>>>>>>>> " << desiredFitness << endl;
 		vector<thread> threads;
 
 		for (int i = 0; i < 8; i++) {
-			threads.push_back(thread(neatSample, dataset, 125, populationSize, desiredFitness));
+			threads.push_back(thread(neatSample, 125, populationSize, desiredFitness, mod));
 		}
 
-		cout << "threads launched" << endl;
+		std::cout << "threads launched" << endl;
 		for (int i = 0; i < threads.size(); i++) {
 			threads[i].join();
-			cout << "thread: " << i << " is finished" << endl;
+			std::cout << "thread: " << i << " is finished" << endl;
 		}
+	}
+}
+
+void networkTrial(int trialSize, int iter, string mod) {
+	Network n(2, 1, 0, 0, .01, false, &sigmoid, &sigmoidDerivative); //this is the base network that all the threads run off of (through clones)
+
+	vector<Node*>lastLayer = n.input;
+	for (int i = 0; i < 5; i++) {
+		vector<Node*> currentLayer;
+		for (int a = 0; a < 10; a++) {
+			currentLayer.push_back(&n.createNode(100, &sigmoid, &sigmoidDerivative));
+		}
+
+		for (int a = 0; a < lastLayer.size(); a++) {
+			for (int b = 0; b < currentLayer.size(); b++) {
+				n.mutateConnection(lastLayer[a]->id, currentLayer[b]->id, 0);
+			}
+		}
+
+		lastLayer = currentLayer;
+	}
+	for (int a = 0; a < lastLayer.size(); a++) {
+		for (int b = 0; b < n.output.size(); b++) {
+			n.mutateConnection(lastLayer[a]->id, n.output[b]->id, 0);
+		}
+	}
+
+
+	vector<thread> threads;
+	threads.push_back(thread(networkSample, n, (trialSize / 8) + (trialSize % 8), iter, mod));
+	for (int i = 0; i < 7; i++) {
+		Network na;
+		Network::clone(n, na);
+		na.networkId += (trialSize / 8) + 1;
+		threads.push_back(thread(networkSample, n, trialSize / 8, iter, mod));
+	}
+
+	std::cout << "threads launched" << endl;
+	for (int i = 0; i < threads.size(); i++) {
+		threads[i].join();
+		std::cout << "thread: " << i << " is finished" << endl;
 	}
 }
 
@@ -206,29 +268,11 @@ int main()
 	}
 
 	randInit();
+	initDt();
 
+	networkTrial(8, 1000, "");
 
-	cout << "num nets " << allNets.size() << endl;
-	
-	vector<thread> threads;
-	for (int i = 0; i < 8; i++) {
-		//s.network.push_back(&allNets[0]);
-		/*vector<thread> threads;
-		for (int i = 0; i < 7; i++) {
-			threads.push_back(thread(networkTrial, data, i));
-		}
-
-		cout << "threads launched" << endl;
-		for (int i = 0; i < threads.size(); i++) {
-			threads[i].join();
-			cout << "thread: " << i << " is finished" << endl;
-		}*/
-		cout << allNets[0].calcFitness(dataset) << endl;
-
-		ezPrune(allNets[0]);
-	}
-	cout << allNets[0].calcFitness(dataset) << endl;
-	cout << "done";
+	std::cout << "done";
 	system("pause");
 	return 0;
 }

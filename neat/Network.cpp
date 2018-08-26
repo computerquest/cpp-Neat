@@ -132,27 +132,25 @@ lim: the maximum number of iterations
 */
 double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vector<pair<vector<double>, vector<double>>>& valid, int lim)
 {
-	double errorChange = -1000.0; //percent of error change
-	double lastError = 1000.0; //last iteration error
+	double errorChange = -1000.0; 
+	double lastError = 1000.0; 
 	double trendError = 1000;
 
-	vector<vector<double>> bestWeight; //holds the values for the best iteration's weights
-	double globalBest = 100000; //global best error
+	vector<vector<double>> bestWeight; 
+	double globalBest = 100000;
 
-	resetWeight(); //clears the current weight values
+	resetWeight();
 
-	int strikes = 100; //number of times in a row that error can increase before stopping
+	int strikes = 100;
 
-					  //loop for each epoch (number of times trained on input)
-	for (int z = 1; true; z++) {
-		double currentError = 0.0; //error for this iteration
+	for (int z = 1; z < lim; z++) {
+		double currentError = 0.0; 
 
-								   //trains each input
 		for (int i = 0; i < test.size(); i++) {
-			currentError += backProp(test[i].first, test[i].second); //actually adjusting the weight to minimize the error, adds the error returned by backpropto the current error
+			currentError += backProp(test[i].first, test[i].second);
 		}
 
-		//updates all the weights
+		//updates all the weightsk
 		for (int i = 0; i < nodeList.size(); i++) {
 			for (int a = 0; a < nodeList[i].send.size(); a++) {
 				Connection& c = nodeList[i].send[a];
@@ -163,11 +161,11 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 				c.velocity = c.betaA*c.velocity + (1 - c.betaA)*pow(g, 2);
 				double vhat = c.velocity / (1 - pow(c.betaA, z));
 				double mhat = c.momentum / (1 - pow(c.beta, z));
-				nodeList[i].send[a].setWeight(c.weight - (learningRate / (sqrt(vhat) + c.epsilon)) * (c.beta*mhat + ((1 - c.beta)*g / (1 - pow(c.beta, z))))); //actual weight update
+				nodeList[i].send[a].setWeight(c.weight - (learningRate / (sqrt(vhat) + c.epsilon)) * (c.beta*mhat + ((1 - c.beta)*g / (1 - pow(c.beta, z)))));
 			}
 		}
 
-		errorChange = (currentError - lastError) / lastError; //percent change in error
+		errorChange = (currentError - lastError) / lastError;
 		lastError = currentError;
 
 		if ((z - 1) % 500 == 0 && currentError / trendError > .9) {
@@ -184,7 +182,6 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 			strikes = 100;
 		}
 
-		//if the validation is the global best then it updates bestWeight and resets the number of strikes
 		if (currentError < globalBest) {
 			for (int i = 0; i < nodeList.size(); i++) {
 				vector<double> one;
@@ -406,7 +403,7 @@ n: Network to clone
 ans: Reference to where n will be cloned to
 innovationDict: Pointer to dictionary that contains connection numbers
 */
-void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
+void Network::clone(Network n, Network& ans)
 {
 	//resets the ans to to be similar to n
 	ans = Network(n.input.size() - 1, n.output.size(), n.networkId, n.species, n.learningRate, false, n.activation, n.activationDerivative);
@@ -417,11 +414,11 @@ void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict)
 	for (int i = 0; i < n.nodeList.size(); i++) {
 		Node* node = &n.nodeList[i];
 		for (int a = 0; a < n.nodeList[i].send.size(); a++) {
-			pair<int, int> v = safeRead(*innovationDict, node->send[a].innovation);
-			ans.mutateConnection(v.first, v.second, node->send[a].innovation, node->send[a].weight);
+			ans.mutateConnection(n.nodeList[i].id, n.nodeList[i].send[a].nodeTo->id, node->send[a].innovation, node->send[a].weight);
 		}
 	}
 	ans.fitness = n.fitness;
+	ans.species = n.species;
 }
 
 double Network::calcFitness(vector<pair<vector<double>, vector<double>>>& input)
@@ -476,10 +473,9 @@ void Network::removeConnection(int from, int to)
 	cout << "";
 }
 
-void Network::write(string file) {
+void Network::write() {
 	ofstream bestNetworks;
-	bestNetworks.open(file);
-
+	bestNetworks.open(".\\results\\network\\" + to_string(fitness)+ " "+ to_string(networkId) + " "+ dt +".txt"); //"results/network/" + dt + "." + to_string(networkId) + "." + to_string(fitness) + 
 	bestNetworks << input.size() - 1 << " " << output.size() << " " << acttoString(nodeList[0].activation).c_str() << " " << fitness << " " << endl;
 
 	for (int i = 0; i < nodeList.size(); i++) {
@@ -498,7 +494,7 @@ void Network::write(string file) {
 }
 
 void Network::read(string file, Network& allNets) {
-	ifstream net(file);
+	ifstream net("./Result Files/" + file);
 	string line = "";
 	bool newNet = true;
 	for (int i = 0; getline(net, line); i++) {

@@ -27,3 +27,7 @@ pair<int, int> safeRead(vector<pair<int, int>>& connectionInnovation, int a);
 int safeWrite(vector<pair<int, int>>& connectionInnovation, int a, int b);
 
 void split(const std::string &s, char delim, vector<string> &result);
+
+void initDt();
+
+extern string dt;

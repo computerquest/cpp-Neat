@@ -391,7 +391,7 @@ void Species::mateSpecies()
 		int id = network[newNets.size()]->networkId;
 		newNets.push_back(Network());
 
-		clone(*sortedNetwork[i], newNets.back(), innovationDict);
+		Network::clone(*sortedNetwork[i], newNets.back());
 
 		mutateNetwork(newNets.back());
 
@@ -405,7 +405,7 @@ void Species::mateSpecies()
 
 	for (int i = 0; i < newNets.size(); i++) {
 		int id = network[i]->networkId;
-		clone(newNets[i], *network[i], innovationDict);
+		Network::clone(newNets[i], *network[i]);
 		network[i]->networkId = id;
 	}
 

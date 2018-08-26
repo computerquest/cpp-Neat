@@ -73,7 +73,7 @@ vector<double> Neat::start(vector<pair<vector<double>, vector<double>>>& input, 
 
 		//compares the best
 		if (bestIndex != -1) {
-			clone(network[bestIndex], bestNet, &connectionInnovation);
+			Network::clone(network[bestIndex], bestNet);
 			/*int bF = bestNet.calcFitness(input);
 			int bfa = bestNet.calcFitness(input);
 			int bfb = bestNet.calcFitness(input);

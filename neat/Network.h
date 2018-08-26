@@ -48,11 +48,11 @@ public:
 	void removeNode(int id); //this will not get rid of the node object just disconnect it
 	void removeConnection(int from, int to);
 
-	void write(string file);
+	void write();
 
 	static void read(string file, Network& ans);
+	static void clone(Network n, Network& ans);
 
 	void remap();
 };
 
-void clone(Network n, Network& ans, vector<pair<int, int>>* innovationDict);

@@ -123,3 +123,16 @@ void split(const std::string &s, char delim, vector<string> &result) {
 		result.push_back(item);
 	}
 }
+
+std::time_t t = std::time(0);
+string dt = string(ctime(&t));
+
+void initDt() {
+	char ch1 = ':';
+	char ch2 = '.';
+	for (int i = 0; i < dt.length(); ++i) {
+		if (dt[i] == ch1)
+			dt[i] = ch2;
+	}
+	dt.erase(dt.length() - 1);
+}
