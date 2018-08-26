@@ -70,9 +70,9 @@ void neatSample(int numTime, int populationSize, int desiredFitness, string mod)
 }
 
 mutex nsMutex;
-void networkSample(Network& n, int iter, int numTime, string mod) {
+void networkSample(Network* n, int iter, int numTime, string mod) {
 	for (int a = 0; a < numTime; a++) {
-		double fitness = n.trainset(dataset, dataset, iter);
+		double fitness = n->trainset(dataset, dataset, iter);
 
 		nsMutex.lock();
 
@@ -84,8 +84,8 @@ void networkSample(Network& n, int iter, int numTime, string mod) {
 
 		nsMutex.unlock();
 
-		n.networkId += a;
-		n.write();
+		n->networkId += a;
+		n->write();
 	}
 }
 
@@ -202,17 +202,26 @@ void networkTrial(int trialSize, int iter, string mod) {
 		}
 	}
 
-
 	vector<thread> threads;
 	vector<Network> nets;
-	threads.push_back(thread(networkSample, n, iter, (trialSize / 8) + (trialSize % 8), mod));
+	nets.reserve(20);
+
+	{
+		Network na;
+		nets.push_back(na);
+
+		Network::clone(n, nets.back());
+
+		threads.push_back(thread(networkSample, &nets.back(), iter, (trialSize / 8) + (trialSize % 8), mod));
+	}
+
 	for (int i = 0; i < 7; i++) {
 		Network na;
 		nets.push_back(na);
 
 		Network::clone(n, nets.back());
 		nets.back().networkId += ((trialSize / 8) + 1)*i;
-		threads.push_back(thread(networkSample, nets.back(), iter, trialSize / 8, mod));
+		threads.push_back(thread(networkSample, &nets.back(), iter, trialSize / 8, mod));
 	}
 
 	std::cout << "threads launched" << endl;
@@ -273,7 +282,7 @@ int main()
 	randInit();
 	initDt();
 
-	networkTrial(100, 5000000, "rand");
+	networkTrial(8, 1000, "");
 
 	std::cout << "done";
 	system("pause");
