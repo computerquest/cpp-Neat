@@ -71,7 +71,7 @@ void neatSample(int numTime, int populationSize, int desiredFitness, string mod)
 
 mutex nsMutex;
 void networkSample(Network& n, int iter, int numTime, string mod) {
-	for (int a = 1; a < numTime; a++) {
+	for (int a = 0; a < numTime; a++) {
 		double fitness = n.trainset(dataset, dataset, iter);
 
 		nsMutex.lock();
@@ -204,12 +204,15 @@ void networkTrial(int trialSize, int iter, string mod) {
 
 
 	vector<thread> threads;
-	threads.push_back(thread(networkSample, n, (trialSize / 8) + (trialSize % 8), iter, mod));
+	vector<Network> nets;
+	threads.push_back(thread(networkSample, n, iter, (trialSize / 8) + (trialSize % 8), mod));
 	for (int i = 0; i < 7; i++) {
 		Network na;
-		Network::clone(n, na);
-		na.networkId += (trialSize / 8) + 1;
-		threads.push_back(thread(networkSample, n, trialSize / 8, iter, mod));
+		nets.push_back(na);
+
+		Network::clone(n, nets.back());
+		nets.back().networkId += ((trialSize / 8) + 1)*i;
+		threads.push_back(thread(networkSample, nets.back(), iter, trialSize / 8, mod));
 	}
 
 	std::cout << "threads launched" << endl;
@@ -270,7 +273,7 @@ int main()
 	randInit();
 	initDt();
 
-	networkTrial(8, 1000, "");
+	networkTrial(100, 5000000, "rand");
 
 	std::cout << "done";
 	system("pause");
