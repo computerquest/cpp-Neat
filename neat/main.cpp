@@ -129,7 +129,7 @@ void networkTrial(vector<pair<vector<double>, vector<double>>>& data, int id) {
 }
 
 void ezPrune(Network& n) {
-	double check = .01;
+	double check = .005;
 	for (int z = 0; z < 10; z++) {
 		cout << "iter: " << z << " " << n.nodeList.size() << endl;
 		for (int i = 0; i < n.nodeList.size(); i++) {
@@ -153,12 +153,14 @@ void ezPrune(Network& n) {
 		}
 
 		for (int i = 0; i < n.nodeList.size(); i++) {
-			if (n.nodeList[i].send.size() == 0) {
+			if (n.nodeList[i].send.size() == 0 && n.nodeList[i].recieve.size() != 0 && n.nodeList[i].id != 0) {
 				cout << "remove: " << n.nodeList[i].id << endl;
 				n.removeNode(n.nodeList[i].id);
 			}
 		}
 	}
+
+	n.remap();
 
 	n.write("testingStuff.txt");
 }
@@ -272,9 +274,11 @@ int main()
 		threads[i].join();
 		cout << "thread: " << i << " is finished" << endl;
 	}*/
+	cout << allNets[0].calcFitness(data) << endl;
 
 	ezPrune(allNets[0]);
 
+	cout << allNets[0].calcFitness(data) << endl;
 	cout << "done";
 	system("pause");
 	return 0;

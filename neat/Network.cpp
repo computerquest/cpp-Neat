@@ -462,10 +462,12 @@ void Network::removeNode(int id)
 
 	for (int i = 0; i < n.send.size(); i++) {
 		removeConnection(n.id, n.send[i].nodeTo->id);
+		i--;
 	}
 
 	for (int i = 0; i < n.recieve.size(); i++) {
 		removeConnection(n.recieve[i]->nodeFrom->id, n.id);
+		i--;
 	}
 }
 
@@ -487,6 +489,8 @@ void Network::removeConnection(int from, int to)
 			break;
 		}
 	}
+
+	cout << "";
 }
 
 void Network::write(string file) {
