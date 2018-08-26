@@ -287,7 +287,8 @@ void Network::resetWeight()
 	for (int i = 0; i < nodeList.size(); i++) {
 		double value = 2 / (double)(nodeList[i].send.size() + nodeList[i].recieve.size());
 		for (int a = 0; a < nodeList[i].send.size(); a++) {
-			nodeList[i].send[a].weight = random(-value, value);
+			//nodeList[i].send[a].weight = random(-value, value);
+			nodeList[i].send[a].weight = random(-.99, .99);
 			nodeList[i].send[a].nextWeight = 0;;
 			nodeList[i].send[a].momentum = 0;
 			nodeList[i].send[a].velocity = 0;
