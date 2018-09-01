@@ -78,7 +78,7 @@ void networkSample(Network* n, int iter, int numTime, string mod) {
 
 		ofstream o;
 		o.open(".\\results\\networkTrial\\" +mod + " " + dt + ".txt" , std::ios_base::app);
-		o << 1/fitness << endl;
+		o << 1/fitness << " "<< n->networkId << endl;
 		o.flush();
 		o.close();
 
@@ -215,12 +215,12 @@ void networkTrial(int trialSize, int iter, string mod) {
 		threads.push_back(thread(networkSample, &nets.back(), iter, (trialSize / 8) + (trialSize % 8), mod));
 	}
 
-	for (int i = 0; i < 7; i++) {
+	for (int i = 1; i < 8; i++) {
 		Network na;
 		nets.push_back(na);
 
 		Network::clone(n, nets.back());
-		nets.back().networkId += ((trialSize / 8) + 1)*i;
+		nets.back().networkId = 1000*i;
 		threads.push_back(thread(networkSample, &nets.back(), iter, trialSize / 8, mod));
 	}
 
@@ -282,7 +282,7 @@ int main()
 	randInit();
 	initDt();
 
-	networkTrial(100, 1000000, "");
+	networkTrial(100, 100000, "iter ");
 
 	std::cout << "done";
 	system("pause");

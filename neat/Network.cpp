@@ -138,6 +138,9 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 
 	int strikes = 100; //number of times in a row that error can increase before stopping
 
+	ofstream iter;
+	iter.open(".\\results\\iterData\\"+ to_string(networkId) + " " + dt + ".txt", ios_base::app);
+
 					   //loop for each epoch (number of times trained on input)
 	for (int z = 1; z < lim; z++) {
 		double currentError = 0.0; //error for this iteration
@@ -194,6 +197,8 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 
 			globalBest = currentError;
 		}
+
+		iter << 1 / currentError << endl;
 	}
 
 	//sets the weights back to the best
@@ -202,6 +207,9 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 			nodeList[i].send[a].weight = bestWeight[i][a];
 		}
 	}
+
+	iter.flush();
+	iter.close();
 
 	calcFitness(test);
 
