@@ -282,7 +282,7 @@ int main()
 	randInit();
 	initDt();
 
-	networkTrial(8, 1000, "");
+	networkTrial(100, 1000000, "");
 
 	std::cout << "done";
 	system("pause");
