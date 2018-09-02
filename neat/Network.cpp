@@ -10,6 +10,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+
 using namespace std;
 
 Network::Network(int inputI, int outputI, int id, int species, double learningRate, bool addCon, double(*activation)(double value), double(*activationDerivative)(double value))

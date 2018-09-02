@@ -88,6 +88,25 @@ void networkSample(Network* n, int iter, int numTime, string mod) {
 		n->write();
 	}
 }
+void networkSampleV(vector<Network>* allNet, int start, int end, int iter, string mod) {
+	for (int a = start; a < end; a++) {
+		(*allNet)[a].networkId = a;
+
+		double fitness = (*allNet)[a].trainset(dataset, dataset, iter);
+
+		nsMutex.lock();
+
+		ofstream o;
+		o.open(".\\results\\networkTrial\\" + mod + " " + dt + ".txt", std::ios_base::app);
+		o << 1 / fitness << " " << (*allNet)[a].networkId << endl;
+		o.flush();
+		o.close();
+
+		nsMutex.unlock();
+
+		(*allNet)[a].write();
+	}
+}
 
 void ezPrune(Network& n, double check) {
 	for (int z = 0; z < 10; z++) {
@@ -128,7 +147,7 @@ void ezPrune(Network& n, double check) {
 }
 
 void loadAllNets(vector<Network>& allNets, string file) {
-	ifstream net("./Result Files/" + file);
+	ifstream net(".\\results\\" + file);
 	string line = "";
 	bool newNet = true;
 	for (int i = 0; getline(net, line); i++) {
@@ -141,7 +160,6 @@ void loadAllNets(vector<Network>& allNets, string file) {
 			if (newNet) {
 				allNets.push_back(Network(stoi(in[0]), stoi(in[1]), 0, 0, .1, false, stringtoAct(in[2]), stringtoDeriv(in[2])));
 				allNets.back().fitness = stod(in[3]);
-				std::cout << fixed << stod(in[3]) << endl;
 				newNet = false;
 			}
 			else if (in.size() == 3) {
@@ -231,6 +249,29 @@ void networkTrial(int trialSize, int iter, string mod) {
 	}
 }
 
+void networkTrial(vector<Network>& allNets, int iter, string mod) {
+	vector<thread> threads;
+	int last = (allNets.size() / 8) + (allNets.size() % 8);
+
+	{
+		cout << "we are starting up " << " " << last << endl;
+		threads.push_back(thread(networkSampleV, &allNets, 0,  last, iter, mod));
+	}
+
+	for (int i = 1; i < 8; i++) {
+		int temp = last + (allNets.size() / 8);
+		cout << "and continueing " << last << " " << temp << endl;
+		threads.push_back(thread(networkSampleV, &allNets, last, temp, iter, mod));
+		last = temp;
+	}
+
+	std::cout << "threads launched" << endl;
+	for (int i = 0; i < threads.size(); i++) {
+		threads[i].join();
+		std::cout << "thread: " << i << " is finished" << endl;
+	}
+}
+
 int main()
 {
 
@@ -282,9 +323,14 @@ int main()
 	randInit();
 	initDt();
 
-	networkTrial(100, 100000, "iter ");
+	vector<Network> allNets;
+	loadAllNets(allNets, "bestNetworks.txt");
+
+	cout << allNets.size() << endl;
+
+	networkTrial(allNets, 100000, "iter ev ");
 
 	std::cout << "done";
-	system("pause");
+	std::system("pause");
 	return 0;
 }
