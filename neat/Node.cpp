@@ -1,5 +1,6 @@
 #include "Node.h"
 #include "Activation.h"
+#include <iostream>
 using namespace std;
 
 Node::Node(int id, int send)

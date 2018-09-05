@@ -151,6 +151,25 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 			currentError += backProp(test[i].first, test[i].second); //actually adjusting the weight to minimize the error, adds the error returned by backpropto the current error
 		}
 
+		//this is up here because the error is for the weights before adjustment
+		if (currentError < globalBest) {
+			bestWeight.clear();
+			for (int i = 0; i < nodeList.size(); i++) {
+				vector<double> one;
+				one.reserve(nodeList[i].send.size());
+				for (int a = 0; a < nodeList[i].send.size(); a++) {
+					one.push_back(nodeList[i].send[a].weight);
+				}
+				bestWeight.push_back(one);
+			}
+			strikes = 100;
+
+			globalBest = currentError;
+		}
+
+		double cf = 1 / currentError;
+		iter << cf << endl;
+
 		//updates all the weights
 		for (int i = 0; i < nodeList.size(); i++) {
 			for (int a = 0; a < nodeList[i].send.size(); a++) {
@@ -182,37 +201,23 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 		else if (errorChange < 0) {
 			strikes = 100;
 		}
-
-		//if the validation is the global best then it updates bestWeight and resets the number of strikes
-		if (currentError < globalBest) {
-			bestWeight.clear();
-			for (int i = 0; i < nodeList.size(); i++) {
-				vector<double> one;
-				one.reserve(nodeList[i].send.size());
-				for (int a = 0; a < nodeList[i].send.size(); a++) {
-					one.push_back(nodeList[i].send[a].weight);
-				}
-				bestWeight.push_back(one);
-			}
-			strikes = 100;
-
-			globalBest = currentError;
-		}
-
-		iter << 1 / currentError << endl;
 	}
 
-	//sets the weights back to the best
-	for (int i = 0; i < bestWeight.size(); i++) {
-		for (int a = 0; a < bestWeight[i].size(); a++) {
-			nodeList[i].send[a].weight = bestWeight[i][a];
+	calcFitness(test);
+
+	if (fitness < (1 / globalBest)) {
+		//sets the weights back to the best
+		for (int i = 0; i < bestWeight.size(); i++) {
+			for (int a = 0; a < bestWeight[i].size(); a++) {
+				nodeList[i].send[a].weight = bestWeight[i][a];
+			}
 		}
 	}
 
 	iter.flush();
 	iter.close();
 
-	calcFitness(test);
+	calcFitness(test); //todo: do i really needthis?
 
 	return 1 / fitness;
 }

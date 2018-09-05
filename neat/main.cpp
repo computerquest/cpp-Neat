@@ -71,7 +71,7 @@ void neatSample(int numTime, int populationSize, int desiredFitness, string mod)
 
 mutex nsMutex;
 void networkSample(Network* n, int iter, int numTime, string mod) {
-	for (int a = 0; a < numTime; a++) {
+	for (int a = 1; a <= numTime; a++) {
 		double fitness = n->trainset(dataset, dataset, iter);
 
 		nsMutex.lock();
@@ -323,12 +323,7 @@ int main()
 	randInit();
 	initDt();
 
-	vector<Network> allNets;
-	loadAllNets(allNets, "bestNetworks.txt");
-
-	cout << allNets.size() << endl;
-
-	networkTrial(allNets, 100000, "iter ev ");
+	networkTrial(100, 100000, "iter full");
 
 	std::cout << "done";
 	std::system("pause");
