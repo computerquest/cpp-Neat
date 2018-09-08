@@ -14,7 +14,14 @@ using namespace chrono;
 
 
 vector<pair<vector<double>, vector<double>>> dataset;
+vector<pair<vector<double>, vector<double>>> valid;
+
 //dt is global and is used for the timestamp of files
+
+void startfunc() {
+	randInit();
+	initDt();
+}
 
 mutex neatMutex;
 void neatSample(int numTime, int populationSize, int desiredFitness, string mod) {
@@ -77,8 +84,8 @@ void networkSample(Network* n, int iter, int numTime, string mod) {
 		nsMutex.lock();
 
 		ofstream o;
-		o.open(".\\results\\networkTrial\\" +mod + " " + dt + ".txt" , std::ios_base::app);
-		o << 1/fitness << " "<< n->networkId << endl;
+		o.open(".\\results\\networkTrial\\" + mod + " " + dt + ".txt", std::ios_base::app);
+		o << n->fitness << " " << n->networkId << endl;
 		o.flush();
 		o.close();
 
@@ -238,7 +245,7 @@ void networkTrial(int trialSize, int iter, string mod) {
 		nets.push_back(na);
 
 		Network::clone(n, nets.back());
-		nets.back().networkId = 1000*i;
+		nets.back().networkId = 1000 * i;
 		threads.push_back(thread(networkSample, &nets.back(), iter, trialSize / 8, mod));
 	}
 
@@ -255,7 +262,7 @@ void networkTrial(vector<Network>& allNets, int iter, string mod) {
 
 	{
 		cout << "we are starting up " << " " << last << endl;
-		threads.push_back(thread(networkSampleV, &allNets, 0,  last, iter, mod));
+		threads.push_back(thread(networkSampleV, &allNets, 0, last, iter, mod));
 	}
 
 	for (int i = 1; i < 8; i++) {
@@ -272,58 +279,163 @@ void networkTrial(vector<Network>& allNets, int iter, string mod) {
 	}
 }
 
+void generatexor(int n, int dsize, double vp) {
+	int vsize = vp * dsize;
+
+
+	auto generate = [&n](vector<pair<vector<double>, vector<double>>>& add) {
+		auto round = [](double in) -> int {
+			if (in >= .5) {
+				return 1;
+			}
+			else {
+				return 0;
+			}
+		};
+		vector<double> in;
+		for (int a = 0; a < n; a++) {
+			in.push_back(random(0., .99));
+		}
+
+		vector<int> xv;
+		for (int a = 0; a < in.size(); a++) {
+			xv.push_back(round(in[a]));
+		}
+
+		bool f = xv[0] ^ xv[1];
+		for (int a = 2; a < xv.size(); a++) {
+			f = f ^ xv[a];
+		}
+
+		vector<double> ans;
+		ans.push_back(f);
+
+		add.push_back(pair<vector<double>, vector<double>>(in, ans));
+	};
+
+	for (int i = 0; i < dsize; i++) {
+		generate(dataset);
+	}
+
+	for (int i = 0; i < vsize; i++) {
+		generate(valid);
+	}
+}
+
+void writeData(string name) {
+	ofstream o(".\\results\\dataset\\" + name + "_test.txt");
+	for (int i = 0; i < dataset.size(); i++) {
+		vector<double>& in = dataset[i].first;
+		o << in[0];
+		for (int a = 1; a < in.size(); a++) {
+			o << " " << in[a];
+		}
+		o << endl;
+
+		vector<double>& res = dataset[i].second;
+		o << res[0];
+		for (int a = 1; a < res.size(); a++) {
+			o << " " << res[a];
+		}
+		o << endl;
+	}
+
+	o.flush();
+	o.close();
+
+	ofstream oa(".\\results\\dataset\\" + name + "_valid.txt");
+	for (int i = 0; i < valid.size(); i++) {
+		vector<double>& in = valid[i].first;
+		oa << in[0];
+		for (int a = 1; a < in.size(); a++) {
+			oa << " " << in[a];
+		}
+		oa << endl;
+
+		vector<double>& res = valid[i].second;
+		oa << res[0];
+		for (int a = 1; a < res.size(); a++) {
+			oa << " " << res[a];
+		}
+		oa << endl;
+	}
+
+	oa.flush();
+	oa.close();
+}
+
+void readData(string file) {
+	ifstream net(".\\results\\dataset\\" + file + "_test.txt");
+	string line = "";
+	int inSize = -1;
+
+	{
+		ifstream net(".\\results\\dataset\\" + file + "_test.txt");
+		string line = "";
+		vector<double> currentInput;
+		for (int i = 0; getline(net, line); i++) {
+			vector<string> in;
+			split(line, ' ', in);
+
+			if (i == 0) {
+				inSize = in.size();
+			}
+
+			if (in.size() == inSize) {
+				currentInput.clear();
+				for (int i = 0; i < in.size(); i++) {
+					currentInput.push_back(stod(in[i]));
+				}
+			}
+			else if (in.size() != inSize) {
+				vector<double> id;
+				for (int i = 0; i < in.size(); i++) {
+					id.push_back(stod(in[i]));
+				}
+
+				dataset.push_back(pair<vector<double>, vector<double>>(currentInput, id));
+			}
+		}
+		
+		net.close();
+	}
+
+	{
+		ifstream net(".\\results\\dataset\\" + file + "_valid.txt");
+		string line = "";
+		vector<double> currentInput;
+		for (int i = 0; getline(net, line); i++) {
+			vector<string> in;
+			split(line, ' ', in);
+
+			if (in.size() == inSize) {
+				currentInput.clear();
+				for (int i = 0; i < in.size(); i++) {
+					currentInput.push_back(stod(in[i]));
+				}
+			}
+			else if (in.size() != inSize) {
+				vector<double> id;
+				for (int i = 0; i < in.size(); i++) {
+					id.push_back(stod(in[i]));
+				}
+
+				valid.push_back(pair<vector<double>, vector<double>>(currentInput, id));
+			}
+		}
+		
+		net.close();
+	}
+}
+
 int main()
 {
+	startfunc();
 
-	{
-		pair<vector<double>, vector<double>> p;
-		vector<double> in;
-		in.push_back(0);
-		in.push_back(1);
-		vector<double> o;
-		o.push_back(1);
-		p.first = in;
-		p.second = o;
-		dataset.push_back(p);
-	}
-	{
-		pair<vector<double>, vector<double>> p;
-		vector<double> in;
-		in.push_back(1);
-		in.push_back(0);
-		vector<double> o;
-		o.push_back(1);
-		p.first = in;
-		p.second = o;
-		dataset.push_back(p);
-	}
-	{
-		pair<vector<double>, vector<double>> p;
-		vector<double> in;
-		in.push_back(1);
-		in.push_back(1);
-		vector<double> o;
-		o.push_back(0);
-		p.first = in;
-		p.second = o;
-		dataset.push_back(p);
-	}
-	{
-		pair<vector<double>, vector<double>> p;
-		vector<double> in;
-		in.push_back(0);
-		in.push_back(0);
-		vector<double> o;
-		o.push_back(0);
-		p.first = in;
-		p.second = o;
-		dataset.push_back(p);
-	}
+	generatexor(2, 1000, .5);
+	writeData("2d_xor 1000 .5");
 
-	randInit();
-	initDt();
-
-	networkTrial(100, 100000, "iter full");
+	networkTrial(8, 1000000, "2d xor");
 
 	std::cout << "done";
 	std::system("pause");

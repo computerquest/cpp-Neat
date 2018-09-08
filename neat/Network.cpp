@@ -83,7 +83,6 @@ void Network::printNetwork()
 }
 
 vector<double> Network::process(vector<double>& input) {
-	//set input values
 	for (int i = 0; i < this->input.size(); i++) {
 		if (i < input.size()) {
 			this->input[i]->setValue(input[i]);
@@ -94,7 +93,6 @@ vector<double> Network::process(vector<double>& input) {
 	}
 
 	vector<double> ans;
-	//values are calculated via connections and nodes signalling
 	for (int i = 0; i < output.size(); i++) {
 		ans.push_back(output[i]->value);
 	}
@@ -104,19 +102,16 @@ vector<double> Network::process(vector<double>& input) {
 
 double Network::backProp(vector<double>& input, vector<double>& desired)
 {
-	process(input); //set the values for the input
+	process(input); 
 
-	double error = 0.0; //return value
+	double error = 0.0; 
 
-						//this will calc all the influence
 	for (int i = 0; i < output.size(); i++) {
 		output[i]->setInfluence(output[i]->value - desired[i]);
 		error += abs(output[i]->value - desired[i]);
 	}
 
-	//all the influence is set the same way as values so it is set via connections and signalling
 
-	//actually adjusts the weights
 	for (int i = 0; i < nodeList.size(); i++) {
 		for (int a = 0; a < nodeList[i].recieve.size(); a++) {
 			nodeList[i].recieve[a]->nextWeight += (nodeList[i].recieve[a]->nodeFrom->value) * nodeList[i].influence;
@@ -128,31 +123,26 @@ double Network::backProp(vector<double>& input, vector<double>& desired)
 
 double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vector<pair<vector<double>, vector<double>>>& valid, int lim)
 {
-	double errorChange = -1000.0; //percent of error change
-	double lastError = 1000.0; //last iteration error
-	double trendError = 1000;
+	vector<vector<double>> bestWeight;
+	double globalBest = -1;
 
-	vector<vector<double>> bestWeight; //holds the values for the best iteration's weights
-	double globalBest = 100000; //global best error
+	resetWeight();
 
-	resetWeight(); //clears the current weight values
+	/*ofstream iter;
+	iter.open(".\\results\\iterData\\"+ to_string(networkId) + " " + dt + ".txt", ios_base::app);*/
 
-	int strikes = 100; //number of times in a row that error can increase before stopping
-
-	ofstream iter;
-	iter.open(".\\results\\iterData\\"+ to_string(networkId) + " " + dt + ".txt", ios_base::app);
-
-					   //loop for each epoch (number of times trained on input)
+	//int iterNum = 1; for tracking best iteration
 	for (int z = 1; z < lim; z++) {
-		double currentError = 0.0; //error for this iteration
 
-								   //trains each input
 		for (int i = 0; i < test.size(); i++) {
-			currentError += backProp(test[i].first, test[i].second); //actually adjusting the weight to minimize the error, adds the error returned by backpropto the current error
+			backProp(test[i].first, test[i].second);
 		}
 
+		calcFitness(valid);
+
 		//this is up here because the error is for the weights before adjustment
-		if (currentError < globalBest) {
+		if (fitness > globalBest) {
+			//iterNum = z;
 			bestWeight.clear();
 			for (int i = 0; i < nodeList.size(); i++) {
 				vector<double> one;
@@ -162,15 +152,15 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 				}
 				bestWeight.push_back(one);
 			}
-			strikes = 100;
 
-			globalBest = currentError;
+			globalBest = fitness;
 		}
 
-		double cf = 1 / currentError;
-		iter << cf << endl;
+		/*if ((z - 1) % 1000 == 0) {
+			double cf = 1 / currentError;
+			iter << cf << endl;
+		}*/
 
-		//updates all the weights
 		for (int i = 0; i < nodeList.size(); i++) {
 			for (int a = 0; a < nodeList[i].send.size(); a++) {
 				Connection& c = nodeList[i].send[a];
@@ -184,40 +174,25 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 				nodeList[i].send[a].setWeight(c.weight - (learningRate / (sqrt(vhat) + c.epsilon)) * (c.beta*mhat + ((1 - c.beta)*g / (1 - pow(c.beta, z))))); //actual weight update
 			}
 		}
-
-		errorChange = (currentError - lastError) / lastError; //percent change in error
-		lastError = currentError;
-
-		if ((z - 1) % 500 == 0 && currentError / trendError > .9) {
-			//break;
-		}
-		else if ((z - 1) % 500 == 0) {
-			trendError = currentError;
-		}
-
-		if (errorChange >= 0) {
-			strikes--;
-		}
-		else if (errorChange < 0) {
-			strikes = 100;
-		}
 	}
 
-	calcFitness(test);
+	calcFitness(valid);
 
-	if (fitness < (1 / globalBest)) {
+	if (fitness < globalBest) {
 		//sets the weights back to the best
 		for (int i = 0; i < bestWeight.size(); i++) {
 			for (int a = 0; a < bestWeight[i].size(); a++) {
 				nodeList[i].send[a].weight = bestWeight[i][a];
 			}
 		}
+
+		fitness = globalBest;
 	}
 
-	iter.flush();
-	iter.close();
+	/*iter.flush();
+	iter.close();*/
 
-	calcFitness(test); //todo: do i really needthis?
+	//calcFitness(valid); //todo: do i really needthis?
 
 	return 1 / fitness;
 }
@@ -506,7 +481,7 @@ void Network::write() {
 }
 
 void Network::read(string file, Network& allNets) {
-	ifstream net("./Result Files/" + file);
+	ifstream net(".\\results\\network\\" + file+".txt");
 	string line = "";
 	bool newNet = true;
 	for (int i = 0; getline(net, line); i++) {
