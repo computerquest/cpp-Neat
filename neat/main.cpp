@@ -25,21 +25,15 @@ void startfunc() {
 
 mutex neatMutex;
 void neatSample(int numTime, int populationSize, int desiredFitness, string mod) {
-	for (int a = 1; a < numTime; a++) {
+	for (int a = 1; a <= numTime; a++) {
 		Neat neat = Neat(populationSize, 2, 1, .3, .1, &sigmoid, &sigmoidDerivative);
 
 		Network winner;
 
 		milliseconds ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch());
-		vector<double> epochs = neat.start(dataset, dataset, 10, desiredFitness, winner);
+		vector<double> epochs = neat.start(dataset, valid, 10, desiredFitness, winner);
 		milliseconds finalTime = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()) - ms;
 
-		winner.write();
-
-		neatMutex.lock();
-
-		ofstream bestNetworks;
-		bestNetworks.open(".\\results\\networkTrial\\" + mod + " " + dt + ".txt", std::ios_base::app);
 		int sumi = 0;
 		for (int i = 0; i < winner.input.size(); i++) {
 			sumi += winner.input[i]->send.size();
@@ -67,19 +61,23 @@ void neatSample(int numTime, int populationSize, int desiredFitness, string mod)
 			}
 		}
 
-
+		neatMutex.lock();
+		ofstream bestNetworks;
+		bestNetworks.open(".\\results\\networkTrial\\" + mod + " " + dt + ".txt", std::ios_base::app);
 		bestNetworks << winner.fitness << " " << hiddenSize << " " << winner.innovation.size() << " " << (double)winner.innovation.size() / (double)winner.nodeList.size() << " " << sumi << " " << sumo << " " << (double)s / hiddenSize << " " << (double)r / hiddenSize << " " << (double)t / hiddenSize << " " << to_string(epochs[1]) << endl;
 
 		bestNetworks.flush();
 		bestNetworks.close();
 		neatMutex.unlock();
+
+		winner.write();
 	}
 }
 
 mutex nsMutex;
 void networkSample(Network* n, int iter, int numTime, string mod) {
 	for (int a = 1; a <= numTime; a++) {
-		double fitness = n->trainset(dataset, dataset, iter);
+		double fitness = n->trainset(dataset, valid, iter);
 
 		nsMutex.lock();
 
@@ -99,7 +97,7 @@ void networkSampleV(vector<Network>* allNet, int start, int end, int iter, strin
 	for (int a = start; a < end; a++) {
 		(*allNet)[a].networkId = a;
 
-		double fitness = (*allNet)[a].trainset(dataset, dataset, iter);
+		double fitness = (*allNet)[a].trainset(dataset, valid, iter);
 
 		nsMutex.lock();
 
@@ -204,7 +202,7 @@ void neatTrial(string mod) {
 }
 
 void networkTrial(int trialSize, int iter, string mod) {
-	Network n(2, 1, 0, 0, .01, false, &sigmoid, &sigmoidDerivative); //this is the base network that all the threads run off of (through clones)
+	Network n((int)dataset[0].first.size(), (int)dataset[0].second.size(), 0, 0, .01, false, &sigmoid, &sigmoidDerivative); //this is the base network that all the threads run off of (through clones)
 
 	vector<Node*>lastLayer = n.input;
 	for (int i = 0; i < 5; i++) {
@@ -396,7 +394,7 @@ void readData(string file) {
 				dataset.push_back(pair<vector<double>, vector<double>>(currentInput, id));
 			}
 		}
-		
+
 		net.close();
 	}
 
@@ -423,19 +421,47 @@ void readData(string file) {
 				valid.push_back(pair<vector<double>, vector<double>>(currentInput, id));
 			}
 		}
-		
+
 		net.close();
 	}
+}
+
+void validate2dxor(string net, string set) {
+	readData(set);
+	Network n;
+	Network::read(net, n);
+
+	n.calcFitness(valid);
+
+	int c = 0;
+	int nc = 0;
+	for (int i = 0; i < valid.size(); i++) {
+		double out = n.process(valid[i].first)[0];
+
+		if (out >= .5 && valid[i].second[0] == 1 || out < .5 && valid[i].second[0] == 0) {
+			c++;
+		}
+		else {
+
+			for (int a = 0; a < valid[i].first.size(); a++) {
+				cout << valid[i].first[a] << " ";
+			}
+			cout << valid[i].second[0] << " " << out << endl;
+
+			nc++;
+		}
+	}
+
+	cout << c << " " << nc << " " << c + nc << " " << (double)c / (nc + c) * 100 << "%" << endl;
 }
 
 int main()
 {
 	startfunc();
 
-	generatexor(2, 1000, .5);
-	writeData("2d_xor 1000 .5");
+	readData("2d_xor 1000 .5");
 
-	networkTrial(8, 1000000, "2d xor");
+	neatSample(1, 100, 10, "testing neat");
 
 	std::cout << "done";
 	std::system("pause");

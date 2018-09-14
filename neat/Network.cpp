@@ -82,13 +82,13 @@ void Network::printNetwork()
 	cout << endl;
 }
 
-vector<double> Network::process(vector<double>& input) {
-	for (int i = 0; i < this->input.size(); i++) {
-		if (i < input.size()) {
-			this->input[i]->setValue(input[i]);
+vector<double> Network::process(vector<double>& init) {
+	for (int i = 0; i < input.size(); i++) {
+		if (i < init.size()) {
+			input[i]->setValue(init[i]);
 		}
 		else {
-			this->input[i]->setValue(1);
+			input[i]->setValue(1);
 		}
 	}
 
@@ -156,9 +156,8 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 			globalBest = fitness;
 		}
 
-		/*if ((z - 1) % 1000 == 0) {
-			double cf = 1 / currentError;
-			iter << cf << endl;
+		/*if ((z - 1) % 100 == 0) {
+			iter << fitness << endl;
 		}*/
 
 		for (int i = 0; i < nodeList.size(); i++) {
@@ -189,8 +188,8 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 		fitness = globalBest;
 	}
 
-	/*iter.flush();
-	iter.close();*/
+	//iter.flush();
+	//iter.close();
 
 	//calcFitness(valid); //todo: do i really needthis?
 

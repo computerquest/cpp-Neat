@@ -12,13 +12,34 @@ uint32_t seed_val;           // populate somehow
 MyRNG rng;                   // e.g. keep one global instance (per thread)
 
 double tanh(double value) {
-	return (pow(2.71, value) - pow(2.71, -1 * value)) / (pow(2.71, value) + pow(2.71, -1 * value));
+	double ans = (pow(2.71, value) - pow(2.71, -1 * value)) / (pow(2.71, value) + pow(2.71, -1 * value));
+	
+	if (ans != ans) {
+		if (value > 0) {
+			return .99999999999999999999999999999999;
+		}
+		else {
+			return -.99999999999999999999999999999999;
+		}
+	}
+
+	return ans;
 }
 double tanhDerivative(double value) {
 	return 1 - pow(tanh(value), 2);
 }
 double sigmoid(double value) {
-	return 1 / (1 + (1 / pow(2.71, value)));
+	double ans = 1 / (1 + (1 / pow(2.71, value)));
+
+	if (ans != ans) {
+		if (value > 0) {
+			return .99999999999999999999999999999999;
+		}
+		else {
+			return .00000000000000000000000000000001;
+		}
+	}
+
 }
 double sigmoidDerivative(double value) {
 	return sigmoid(value) * (1 - sigmoid(value));
