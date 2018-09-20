@@ -102,9 +102,9 @@ vector<double> Network::process(vector<double>& init) {
 
 double Network::backProp(vector<double>& input, vector<double>& desired)
 {
-	process(input); 
+	process(input);
 
-	double error = 0.0; 
+	double error = 0.0;
 
 	for (int i = 0; i < output.size(); i++) {
 		output[i]->setInfluence(output[i]->value - desired[i]);
@@ -128,8 +128,8 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 
 	resetWeight();
 
-	/*ofstream iter;
-	iter.open(".\\results\\iterData\\"+ to_string(networkId) + " " + dt + ".txt", ios_base::app);*/
+	ofstream iter;
+	iter.open(".\\results\\iterData\\"+ to_string(networkId) + " " + dt + ".txt", ios_base::app);
 
 	//int iterNum = 1; for tracking best iteration
 	for (int z = 1; z < lim; z++) {
@@ -156,9 +156,9 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 			globalBest = fitness;
 		}
 
-		/*if ((z - 1) % 100 == 0) {
+		if ((z - 1) % 100 == 0) {
 			iter << fitness << endl;
-		}*/
+		}
 
 		for (int i = 0; i < nodeList.size(); i++) {
 			for (int a = 0; a < nodeList[i].send.size(); a++) {
@@ -170,7 +170,7 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 				c.velocity = c.betaA*c.velocity + (1 - c.betaA)*pow(g, 2);
 				double vhat = c.velocity / (1 - pow(c.betaA, z));
 				double mhat = c.momentum / (1 - pow(c.beta, z));
-				nodeList[i].send[a].setWeight(c.weight - (learningRate / (sqrt(vhat) + c.epsilon)) * (c.beta*mhat + ((1 - c.beta)*g / (1 - pow(c.beta, z))))); //actual weight update
+				nodeList[i].send[a].setWeight(c.weight - (learningRate / (sqrt(vhat) + c.epsilon)) * (c.beta*mhat + ((1 - c.beta)*g / (1 - pow(c.beta, z))))); //actual weight update nodeList[i].send[a].setWeight(c.weight - g * learningRate);//
 			}
 		}
 	}
@@ -188,8 +188,8 @@ double Network::trainset(vector<pair<vector<double>, vector<double>>>& test, vec
 		fitness = globalBest;
 	}
 
-	//iter.flush();
-	//iter.close();
+	iter.flush();
+	iter.close();
 
 	//calcFitness(valid); //todo: do i really needthis?
 
@@ -461,7 +461,7 @@ void Network::removeConnection(int from, int to)
 
 void Network::write() {
 	ofstream bestNetworks;
-	bestNetworks.open(".\\results\\network\\" + to_string(fitness)+ " "+ to_string(networkId) + " "+ dt +".txt"); //"results/network/" + dt + "." + to_string(networkId) + "." + to_string(fitness) + 
+	bestNetworks.open(".\\results\\network\\" + to_string(fitness) + " " + to_string(networkId) + " " + dt + ".txt"); //"results/network/" + dt + "." + to_string(networkId) + "." + to_string(fitness) + 
 	bestNetworks << input.size() - 1 << " " << output.size() << " " << acttoString(nodeList[0].activation).c_str() << " " << fitness << " " << endl;
 
 	for (int i = 0; i < nodeList.size(); i++) {
@@ -480,7 +480,7 @@ void Network::write() {
 }
 
 void Network::read(string file, Network& allNets) {
-	ifstream net(".\\results\\network\\" + file+".txt");
+	ifstream net(".\\results\\network\\" + file + ".txt");
 	string line = "";
 	bool newNet = true;
 	for (int i = 0; getline(net, line); i++) {

@@ -201,13 +201,13 @@ void neatTrial(string mod) {
 	}
 }
 
-void networkTrial(int trialSize, int iter, string mod) {
-	Network n((int)dataset[0].first.size(), (int)dataset[0].second.size(), 0, 0, .01, false, &sigmoid, &sigmoidDerivative); //this is the base network that all the threads run off of (through clones)
-
-	vector<Node*>lastLayer = n.input;
-	for (int i = 0; i < 5; i++) {
+void generateFullyConnected(vector<int> layers, Network& n) { //just needs hidden
+	n = Network((int)dataset[0].first.size(), (int)dataset[0].second.size(), 0, 0, 1, false, &sigmoid, &sigmoidDerivative); //this is the base network that all the threads run off of (through clones)
+	vector<Node*> lastLayer = n.input;
+	int biasId = n.input.size() - 1 + n.output.size();
+	for (int i = 0; i < layers.size(); i++) {
 		vector<Node*> currentLayer;
-		for (int a = 0; a < 10; a++) {
+		for (int a = 0; a < layers[i]; a++) {
 			currentLayer.push_back(&n.createNode(100, &sigmoid, &sigmoidDerivative));
 		}
 
@@ -217,13 +217,36 @@ void networkTrial(int trialSize, int iter, string mod) {
 			}
 		}
 
+		if (i > 0) {
+			for (int b = 0; b < currentLayer.size(); b++) {
+				n.mutateConnection(biasId, currentLayer[b]->id, 0);
+			}
+		}
+
 		lastLayer = currentLayer;
 	}
+
 	for (int a = 0; a < lastLayer.size(); a++) {
 		for (int b = 0; b < n.output.size(); b++) {
 			n.mutateConnection(lastLayer[a]->id, n.output[b]->id, 0);
 		}
 	}
+
+	for (int b = 0; b < n.output.size(); b++) {
+		n.mutateConnection(biasId, n.output[b]->id, 0);
+	}
+}
+
+void networkTrial(int trialSize, int iter, string mod) {
+	vector<int> dem;
+	for (int i = 0; i < 5; i++) {
+		dem.push_back(20);
+	}
+
+	Network n;
+	generateFullyConnected(dem, n);
+
+	vector<Node*>lastLayer = n.input;
 
 	vector<thread> threads;
 	vector<Network> nets;
@@ -277,6 +300,38 @@ void networkTrial(vector<Network>& allNets, int iter, string mod) {
 	}
 }
 
+void networkTrial(int trialSize, int iter, Network n, string mod) {
+	vector<Node*>lastLayer = n.input;
+
+	vector<thread> threads;
+	vector<Network> nets;
+	nets.reserve(20);
+
+	{
+		Network na;
+		nets.push_back(na);
+
+		Network::clone(n, nets.back());
+
+		threads.push_back(thread(networkSample, &nets.back(), iter, (trialSize / 8) + (trialSize % 8), mod));
+	}
+
+	for (int i = 1; i < 8; i++) {
+		Network na;
+		nets.push_back(na);
+
+		Network::clone(n, nets.back());
+		nets.back().networkId = 1000 * i;
+		threads.push_back(thread(networkSample, &nets.back(), iter, trialSize / 8, mod));
+	}
+
+	std::cout << "threads launched" << endl;
+	for (int i = 0; i < threads.size(); i++) {
+		threads[i].join();
+		std::cout << "thread: " << i << " is finished" << endl;
+	}
+}
+
 void generatexor(int n, int dsize, double vp) {
 	int vsize = vp * dsize;
 
@@ -290,6 +345,7 @@ void generatexor(int n, int dsize, double vp) {
 				return 0;
 			}
 		};
+
 		vector<double> in;
 		for (int a = 0; a < n; a++) {
 			in.push_back(random(0., .99));
@@ -426,7 +482,7 @@ void readData(string file) {
 	}
 }
 
-void validate2dxor(string net, string set) {
+void validatexor(string net, string set) {
 	readData(set);
 	Network n;
 	Network::read(net, n);
@@ -452,16 +508,30 @@ void validate2dxor(string net, string set) {
 		}
 	}
 
-	cout << c << " " << nc << " " << c + nc << " " << (double)c / (nc + c) * 100 << "%" << endl;
+	cout << "valid: " << c << " " << nc << " " << c + nc << " " << (double)c / (nc + c) * 100 << "%" << endl;
+
+	{
+		c = 0;
+		nc = 0;
+		for (int i = 0; i < dataset.size(); i++) {
+			double out = n.process(dataset[i].first)[0];
+
+			if (out >= .5 && dataset[i].second[0] == 1 || out < .5 && dataset[i].second[0] == 0) {
+				c++;
+			}
+			else {
+				nc++;
+			}
+		}
+
+		cout << "dataset: " << c << " " << nc << " " << c + nc << " " << (double)c / (nc + c) * 100 << "%" << endl;
+
+	}
 }
 
 int main()
 {
 	startfunc();
-
-	readData("2d_xor 1000 .5");
-
-	neatSample(1, 100, 10, "testing neat");
 
 	std::cout << "done";
 	std::system("pause");
